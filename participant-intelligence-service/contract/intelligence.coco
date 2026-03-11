@@ -1,0 +1,613 @@
+// ============================================================================
+// Intelligence.coco
+// ============================================================================
+//
+// Purpose:
+//   Participant-bound intelligence object for the MOI Participant Layer.
+//   1. Context availability across agents, apps, and workflows
+//   2. Fine-grained access control for agents with session-based delegation
+//
+// Design:
+//   - Actor-state-only storage (no logic state)
+//   - Participant-bound state model
+//   - Category-based access references
+//   - Session-based authorization with expiry and usage limits
+//
+// ============================================================================
+
+coco Intelligence
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const CATEGORY_FOOD     String = "FOOD"
+const CATEGORY_HEALTH   String = "HEALTH"
+const CATEGORY_ADDRESS  String = "ADDRESS"
+const CATEGORY_PAYMENT  String = "PAYMENT"
+
+const STATUS_REQUESTED  String = "REQUESTED"
+const STATUS_ACTIVE     String = "ACTIVE"
+const STATUS_DENIED     String = "DENIED"
+const STATUS_EXPIRED    String = "EXPIRED"
+const STATUS_EXHAUSTED  String = "EXHAUSTED"
+const STATUS_REVOKED    String = "REVOKED"
+
+const REASON_VALID            String = "valid"
+const REASON_NOT_FOUND        String = "not_found"
+const REASON_WRONG_STATUS     String = "wrong_status"
+const REASON_AGENT_MISMATCH   String = "agent_mismatch"
+const REASON_EXPIRED          String = "expired"
+const REASON_EXHAUSTED        String = "exhausted"
+const REASON_MISSING_CATEGORY String = "missing_category"
+const REASON_MISSING_SCOPE    String = "missing_scope"
+
+// ============================================================================
+// CLASSES
+// ============================================================================
+
+class CategoryRef:
+    field Category      String
+    field Ref           String
+    field SchemaVersion String
+    field LastUpdated   U64
+    field Exists        Bool
+
+class SessionRecord:
+    field SessionId          String
+    field AgentId            String
+    field Status             String
+    field Purpose            String
+    field ApprovedCategories []String
+    field ApprovedScopes     []String
+    field IssuedAt           U64
+    field ExpiresAt          U64
+    field RemainingUses      U64
+    field ApprovalRef        String
+    field RevocationReason   String
+    field Exists             Bool
+
+class ValidationResult:
+    field Valid  Bool
+    field Reason String
+
+class SessionSummary:
+    field SessionId String
+    field AgentId   String
+    field Status    String
+    field Purpose   String
+    field ExpiresAt U64
+
+class IntelligenceObject:
+    field ActorId         Identifier
+    field Version         U64
+    field CategoryRefs    []CategoryRef
+    field ActiveSessions  []SessionSummary
+    field LastUpdatedAt   U64
+
+// ============================================================================
+// ACTOR STATE
+// ============================================================================
+
+state actor:
+    category_refs   Map[String]CategoryRef
+    sessions        Map[String]SessionRecord
+    version         U64
+    last_updated_at U64
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+function IsValidCategory(category String) -> (valid Bool):
+    if category == CATEGORY_FOOD:
+        valid = true
+        return
+    if category == CATEGORY_HEALTH:
+        valid = true
+        return
+    if category == CATEGORY_ADDRESS:
+        valid = true
+        return
+    if category == CATEGORY_PAYMENT:
+        valid = true
+        return
+    valid = false
+
+function ContainsString(arr []String, value String) -> (found Bool):
+    found = false
+    for _, item in arr:
+        if item == value:
+            found = true
+            return
+
+function IsSubset(required []String, approved []String) -> (is_subset Bool):
+    is_subset = true
+    for _, req in required:
+        memory check_found Bool
+        check_found = (found) <- ContainsString(arr: approved, value: req)
+        if !check_found:
+            is_subset = false
+            return
+
+// ============================================================================
+// ENDPOINT: SetCategoryRef
+// ============================================================================
+
+endpoint dynamic SetCategoryRef(category String, ref String, schema_version String, updated_at U64):
+    memory check_valid Bool
+    check_valid = (valid) <- IsValidCategory(category)
+    if !check_valid:
+        throw "Invalid category: must be FOOD, HEALTH, ADDRESS, or PAYMENT"
+
+    memory cat_ref CategoryRef
+    cat_ref = CategoryRef{
+        Category:      category,
+        Ref:           ref,
+        SchemaVersion: schema_version,
+        LastUpdated:   updated_at,
+        Exists:        true
+    }
+
+    mutate refs <- Intelligence.Sender.category_refs:
+        disperse refs[category] <- cat_ref
+
+    mutate ver <- Intelligence.Sender.version:
+        ver = ver + 1
+
+    mutate updated_at -> Intelligence.Sender.last_updated_at
+
+// ============================================================================
+// ENDPOINT: RemoveCategoryRef
+// ============================================================================
+
+endpoint dynamic RemoveCategoryRef(category String, updated_at U64):
+    memory existing CategoryRef
+    observe refs <- Intelligence.Sender.category_refs:
+        gather existing <- refs[category]
+
+    if !existing.Exists:
+        throw "Category reference does not exist"
+
+    memory empty_ref CategoryRef
+    empty_ref = CategoryRef{
+        Category:      category,
+        Ref:           "",
+        SchemaVersion: "",
+        LastUpdated:   0,
+        Exists:        false
+    }
+
+    mutate refs <- Intelligence.Sender.category_refs:
+        disperse refs[category] <- empty_ref
+
+    mutate ver <- Intelligence.Sender.version:
+        ver = ver + 1
+
+    mutate updated_at -> Intelligence.Sender.last_updated_at
+
+// ============================================================================
+// ENDPOINT: GetCategoryRef
+// ============================================================================
+
+endpoint static GetCategoryRef(actor_id Identifier, category String) -> (cat_ref CategoryRef):
+    observe refs <- Intelligence.Actor(actor_id).category_refs:
+        gather cat_ref <- refs[category]
+
+// ============================================================================
+// ENDPOINT: ListCategoryRefs
+// ============================================================================
+
+endpoint static ListCategoryRefs(actor_id Identifier) -> (result []CategoryRef):
+    memory refs_list []CategoryRef
+
+    memory food_ref CategoryRef
+    observe refs <- Intelligence.Actor(actor_id).category_refs:
+        gather food_ref <- refs[CATEGORY_FOOD]
+    if food_ref.Exists:
+        append(refs_list, food_ref)
+
+    memory health_ref CategoryRef
+    observe refs <- Intelligence.Actor(actor_id).category_refs:
+        gather health_ref <- refs[CATEGORY_HEALTH]
+    if health_ref.Exists:
+        append(refs_list, health_ref)
+
+    memory address_ref CategoryRef
+    observe refs <- Intelligence.Actor(actor_id).category_refs:
+        gather address_ref <- refs[CATEGORY_ADDRESS]
+    if address_ref.Exists:
+        append(refs_list, address_ref)
+
+    memory payment_ref CategoryRef
+    observe refs <- Intelligence.Actor(actor_id).category_refs:
+        gather payment_ref <- refs[CATEGORY_PAYMENT]
+    if payment_ref.Exists:
+        append(refs_list, payment_ref)
+
+    result = refs_list
+
+// ============================================================================
+// ENDPOINT: CreateSessionRequest
+// ============================================================================
+
+endpoint dynamic CreateSessionRequest(
+    session_id String,
+    agent_id String,
+    purpose String,
+    approved_categories []String,
+    approved_scopes []String,
+    requested_uses U64,
+    ttl_seconds U64,
+    approval_ref String
+):
+    memory existing SessionRecord
+    observe sessions <- Intelligence.Sender.sessions:
+        gather existing <- sessions[session_id]
+
+    if existing.Exists:
+        throw "Session already exists with this ID"
+
+    for _, cat in approved_categories:
+        memory check_valid Bool
+        check_valid = (valid) <- IsValidCategory(category: cat)
+        if !check_valid:
+            throw "Invalid category in approved_categories"
+
+    memory session SessionRecord
+    session = SessionRecord{
+        SessionId:          session_id,
+        AgentId:            agent_id,
+        Status:             STATUS_REQUESTED,
+        Purpose:            purpose,
+        ApprovedCategories: approved_categories,
+        ApprovedScopes:     approved_scopes,
+        IssuedAt:           0,
+        ExpiresAt:          0,
+        RemainingUses:      requested_uses,
+        ApprovalRef:        approval_ref,
+        RevocationReason:   "",
+        Exists:             true
+    }
+
+    mutate sessions <- Intelligence.Sender.sessions:
+        disperse sessions[session_id] <- session
+
+    mutate ver <- Intelligence.Sender.version:
+        ver = ver + 1
+
+// ============================================================================
+// ENDPOINT: ApproveSession
+// ============================================================================
+
+endpoint dynamic ApproveSession(
+    session_id String,
+    issued_at U64,
+    expires_at U64,
+    remaining_uses U64,
+    approval_ref String
+):
+    memory session SessionRecord
+    observe sessions <- Intelligence.Sender.sessions:
+        gather session <- sessions[session_id]
+
+    if !session.Exists:
+        throw "Session not found"
+
+    if session.Status != STATUS_REQUESTED:
+        throw "Session is not in REQUESTED status"
+
+    if expires_at <= issued_at:
+        throw "ExpiresAt must be greater than IssuedAt"
+
+    memory updated_session SessionRecord
+    updated_session = SessionRecord{
+        SessionId:          session.SessionId,
+        AgentId:            session.AgentId,
+        Status:             STATUS_ACTIVE,
+        Purpose:            session.Purpose,
+        ApprovedCategories: session.ApprovedCategories,
+        ApprovedScopes:     session.ApprovedScopes,
+        IssuedAt:           issued_at,
+        ExpiresAt:          expires_at,
+        RemainingUses:      remaining_uses,
+        ApprovalRef:        approval_ref,
+        RevocationReason:   "",
+        Exists:             true
+    }
+
+    mutate sessions <- Intelligence.Sender.sessions:
+        disperse sessions[session_id] <- updated_session
+
+    mutate ver <- Intelligence.Sender.version:
+        ver = ver + 1
+
+    mutate issued_at -> Intelligence.Sender.last_updated_at
+
+// ============================================================================
+// ENDPOINT: DenySession
+// ============================================================================
+
+endpoint dynamic DenySession(session_id String, denial_reason String):
+    memory session SessionRecord
+    observe sessions <- Intelligence.Sender.sessions:
+        gather session <- sessions[session_id]
+
+    if !session.Exists:
+        throw "Session not found"
+
+    if session.Status != STATUS_REQUESTED:
+        throw "Session is not in REQUESTED status"
+
+    memory denied_session SessionRecord
+    denied_session = SessionRecord{
+        SessionId:          session.SessionId,
+        AgentId:            session.AgentId,
+        Status:             STATUS_DENIED,
+        Purpose:            session.Purpose,
+        ApprovedCategories: session.ApprovedCategories,
+        ApprovedScopes:     session.ApprovedScopes,
+        IssuedAt:           session.IssuedAt,
+        ExpiresAt:          session.ExpiresAt,
+        RemainingUses:      session.RemainingUses,
+        ApprovalRef:        session.ApprovalRef,
+        RevocationReason:   denial_reason,
+        Exists:             true
+    }
+
+    mutate sessions <- Intelligence.Sender.sessions:
+        disperse sessions[session_id] <- denied_session
+
+    mutate ver <- Intelligence.Sender.version:
+        ver = ver + 1
+
+// ============================================================================
+// ENDPOINT: GetSession
+// ============================================================================
+
+endpoint static GetSession(actor_id Identifier, session_id String) -> (session SessionRecord):
+    observe sessions <- Intelligence.Actor(actor_id).sessions:
+        gather session <- sessions[session_id]
+
+// ============================================================================
+// ENDPOINT: ValidateSession
+// ============================================================================
+
+endpoint static ValidateSession(
+    actor_id Identifier,
+    session_id String,
+    agent_id String,
+    required_categories []String,
+    required_scopes []String,
+    current_time U64
+) -> (result ValidationResult):
+    memory session SessionRecord
+    observe sessions <- Intelligence.Actor(actor_id).sessions:
+        gather session <- sessions[session_id]
+
+    if !session.Exists:
+        result = ValidationResult{Valid: false, Reason: REASON_NOT_FOUND}
+        return
+
+    if session.Status != STATUS_ACTIVE:
+        result = ValidationResult{Valid: false, Reason: REASON_WRONG_STATUS}
+        return
+
+    if session.AgentId != agent_id:
+        result = ValidationResult{Valid: false, Reason: REASON_AGENT_MISMATCH}
+        return
+
+    if current_time > session.ExpiresAt:
+        result = ValidationResult{Valid: false, Reason: REASON_EXPIRED}
+        return
+
+    if session.RemainingUses == 0:
+        result = ValidationResult{Valid: false, Reason: REASON_EXHAUSTED}
+        return
+
+    memory cats_ok Bool
+    cats_ok = (is_subset) <- IsSubset(required: required_categories, approved: session.ApprovedCategories)
+    if !cats_ok:
+        result = ValidationResult{Valid: false, Reason: REASON_MISSING_CATEGORY}
+        return
+
+    memory scopes_ok Bool
+    scopes_ok = (is_subset) <- IsSubset(required: required_scopes, approved: session.ApprovedScopes)
+    if !scopes_ok:
+        result = ValidationResult{Valid: false, Reason: REASON_MISSING_SCOPE}
+        return
+
+    result = ValidationResult{Valid: true, Reason: REASON_VALID}
+
+// ============================================================================
+// ENDPOINT: ConsumeSessionUse
+// ============================================================================
+
+endpoint dynamic ConsumeSessionUse(session_id String, current_time U64):
+    memory session SessionRecord
+    observe sessions <- Intelligence.Sender.sessions:
+        gather session <- sessions[session_id]
+
+    if !session.Exists:
+        throw "Session not found"
+
+    if current_time > session.ExpiresAt:
+        memory expired_session SessionRecord
+        expired_session = SessionRecord{
+            SessionId:          session.SessionId,
+            AgentId:            session.AgentId,
+            Status:             STATUS_EXPIRED,
+            Purpose:            session.Purpose,
+            ApprovedCategories: session.ApprovedCategories,
+            ApprovedScopes:     session.ApprovedScopes,
+            IssuedAt:           session.IssuedAt,
+            ExpiresAt:          session.ExpiresAt,
+            RemainingUses:      session.RemainingUses,
+            ApprovalRef:        session.ApprovalRef,
+            RevocationReason:   "",
+            Exists:             true
+        }
+        mutate sessions <- Intelligence.Sender.sessions:
+            disperse sessions[session_id] <- expired_session
+        mutate ver <- Intelligence.Sender.version:
+            ver = ver + 1
+        throw "Session has expired"
+
+    if session.Status != STATUS_ACTIVE:
+        throw "Session is not active"
+
+    if session.RemainingUses == 0:
+        memory exhausted_session SessionRecord
+        exhausted_session = SessionRecord{
+            SessionId:          session.SessionId,
+            AgentId:            session.AgentId,
+            Status:             STATUS_EXHAUSTED,
+            Purpose:            session.Purpose,
+            ApprovedCategories: session.ApprovedCategories,
+            ApprovedScopes:     session.ApprovedScopes,
+            IssuedAt:           session.IssuedAt,
+            ExpiresAt:          session.ExpiresAt,
+            RemainingUses:      0,
+            ApprovalRef:        session.ApprovalRef,
+            RevocationReason:   "",
+            Exists:             true
+        }
+        mutate sessions <- Intelligence.Sender.sessions:
+            disperse sessions[session_id] <- exhausted_session
+        mutate ver <- Intelligence.Sender.version:
+            ver = ver + 1
+        throw "Session has no remaining uses"
+
+    memory new_remaining U64
+    new_remaining = session.RemainingUses - 1
+
+    memory new_status String
+    new_status = STATUS_ACTIVE
+    if new_remaining == 0:
+        new_status = STATUS_EXHAUSTED
+
+    memory updated_session SessionRecord
+    updated_session = SessionRecord{
+        SessionId:          session.SessionId,
+        AgentId:            session.AgentId,
+        Status:             new_status,
+        Purpose:            session.Purpose,
+        ApprovedCategories: session.ApprovedCategories,
+        ApprovedScopes:     session.ApprovedScopes,
+        IssuedAt:           session.IssuedAt,
+        ExpiresAt:          session.ExpiresAt,
+        RemainingUses:      new_remaining,
+        ApprovalRef:        session.ApprovalRef,
+        RevocationReason:   "",
+        Exists:             true
+    }
+
+    mutate sessions <- Intelligence.Sender.sessions:
+        disperse sessions[session_id] <- updated_session
+
+    mutate ver <- Intelligence.Sender.version:
+        ver = ver + 1
+
+    mutate current_time -> Intelligence.Sender.last_updated_at
+
+// ============================================================================
+// ENDPOINT: RevokeSession
+// ============================================================================
+
+endpoint dynamic RevokeSession(session_id String, revocation_reason String):
+    memory session SessionRecord
+    observe sessions <- Intelligence.Sender.sessions:
+        gather session <- sessions[session_id]
+
+    if !session.Exists:
+        throw "Session not found"
+
+    if session.Status != STATUS_ACTIVE && session.Status != STATUS_REQUESTED:
+        throw "Session cannot be revoked from current status"
+
+    memory revoked_session SessionRecord
+    revoked_session = SessionRecord{
+        SessionId:          session.SessionId,
+        AgentId:            session.AgentId,
+        Status:             STATUS_REVOKED,
+        Purpose:            session.Purpose,
+        ApprovedCategories: session.ApprovedCategories,
+        ApprovedScopes:     session.ApprovedScopes,
+        IssuedAt:           session.IssuedAt,
+        ExpiresAt:          session.ExpiresAt,
+        RemainingUses:      session.RemainingUses,
+        ApprovalRef:        session.ApprovalRef,
+        RevocationReason:   revocation_reason,
+        Exists:             true
+    }
+
+    mutate sessions <- Intelligence.Sender.sessions:
+        disperse sessions[session_id] <- revoked_session
+
+    mutate ver <- Intelligence.Sender.version:
+        ver = ver + 1
+
+// ============================================================================
+// ENDPOINT: GetIntelligenceObject
+// ============================================================================
+
+endpoint static GetIntelligenceObject(actor_id Identifier) -> (intel_obj IntelligenceObject):
+    memory ver U64
+    observe ver <- Intelligence.Actor(actor_id).version
+
+    memory last_updated U64
+    observe last_updated <- Intelligence.Actor(actor_id).last_updated_at
+
+    memory cat_refs []CategoryRef
+
+    memory food_ref CategoryRef
+    observe refs <- Intelligence.Actor(actor_id).category_refs:
+        gather food_ref <- refs[CATEGORY_FOOD]
+    if food_ref.Exists:
+        append(cat_refs, food_ref)
+
+    memory health_ref CategoryRef
+    observe refs <- Intelligence.Actor(actor_id).category_refs:
+        gather health_ref <- refs[CATEGORY_HEALTH]
+    if health_ref.Exists:
+        append(cat_refs, health_ref)
+
+    memory address_ref CategoryRef
+    observe refs <- Intelligence.Actor(actor_id).category_refs:
+        gather address_ref <- refs[CATEGORY_ADDRESS]
+    if address_ref.Exists:
+        append(cat_refs, address_ref)
+
+    memory payment_ref CategoryRef
+    observe refs <- Intelligence.Actor(actor_id).category_refs:
+        gather payment_ref <- refs[CATEGORY_PAYMENT]
+    if payment_ref.Exists:
+        append(cat_refs, payment_ref)
+
+    memory active_sessions []SessionSummary
+
+    intel_obj = IntelligenceObject{
+        ActorId:        actor_id,
+        Version:        ver,
+        CategoryRefs:   cat_refs,
+        ActiveSessions: active_sessions,
+        LastUpdatedAt:  last_updated
+    }
+
+// ============================================================================
+// ENDPOINT: GetVersion
+// ============================================================================
+
+endpoint static GetVersion(actor_id Identifier) -> (ver U64):
+    observe ver <- Intelligence.Actor(actor_id).version
+
+// ============================================================================
+// ENDPOINT: GetLastUpdatedAt
+// ============================================================================
+
+endpoint static GetLastUpdatedAt(actor_id Identifier) -> (last_updated U64):
+    observe last_updated <- Intelligence.Actor(actor_id).last_updated_at
+
+// ============================================================================
+// END OF CONTRACT
+// ============================================================================
