@@ -174,7 +174,7 @@ endpoint dynamic RemoveCategoryRef(category String, updated_at U64):
         Category:      category,
         Ref:           "",
         SchemaVersion: "",
-        LastUpdated:   0,
+        LastUpdated:   updated_at,
         Exists:        false
     }
 
@@ -241,12 +241,11 @@ endpoint dynamic CreateSessionRequest(
     ttl_seconds U64,
     approval_ref String
 ):
-    memory existing SessionRecord
     observe sessions <- Intelligence.Sender.sessions:
-        gather existing <- sessions[session_id]
-
-    if existing.Exists:
-        throw "Session already exists with this ID"
+        if sessions[session_id]?:
+            storage existing SessionRecord = sessions[session_id]
+            if existing.Exists:
+                throw "Session already exists with this ID"
 
     for _, cat in approved_categories:
         memory check_valid Bool
