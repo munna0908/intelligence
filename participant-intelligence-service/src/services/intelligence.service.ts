@@ -4,14 +4,15 @@
  * Handles reading participant intelligence object state and category references.
  */
 
-import type { IMoiSdkAdapter } from '../../adapters/moi-sdk/index.js';
-import { getMoiSdkAdapter } from '../../adapters/moi-sdk/index.js';
+import * as moiInterface from '../moi/interface/intelligence.interface.js';
+import * as mockInterface from '../moi/interface/mock.interface.js';
 import type {
   IntelligenceObjectSummary,
   CategoryRefsResponse,
-} from '../../domain/models.js';
-import type { Category } from '../../domain/types.js';
-import { getLogger } from '../../logging/index.js';
+} from '../domain/models.js';
+import type { Category } from '../domain/types.js';
+import { getConfig } from '../config/index.js';
+import { getLogger } from '../logging/index.js';
 
 export interface IIntelligenceService {
   getIntelligenceObject(participantId: string): Promise<IntelligenceObjectSummary | null>;
@@ -20,10 +21,10 @@ export interface IIntelligenceService {
 
 export class IntelligenceService implements IIntelligenceService {
   private logger = getLogger().child({ service: 'intelligence' });
-  private adapter: IMoiSdkAdapter;
+  private useMock: boolean;
 
-  constructor(adapter?: IMoiSdkAdapter) {
-    this.adapter = adapter ?? getMoiSdkAdapter();
+  constructor() {
+    this.useMock = getConfig().moi.useMockAdapter;
   }
 
   /**
@@ -33,7 +34,9 @@ export class IntelligenceService implements IIntelligenceService {
     this.logger.info({ participantId }, 'Fetching intelligence object');
 
     try {
-      const result = await this.adapter.getIntelligenceObject(participantId);
+      const result = this.useMock
+        ? await mockInterface.mockGetIntelligenceObject(participantId)
+        : await moiInterface.getIntelligenceObject(participantId);
 
       if (!result) {
         this.logger.info({ participantId }, 'Intelligence object not found');
@@ -66,7 +69,9 @@ export class IntelligenceService implements IIntelligenceService {
     this.logger.info({ participantId, categories }, 'Fetching category refs');
 
     try {
-      const categoryRefs = await this.adapter.getCategoryRefs(participantId, categories);
+      const categoryRefs = this.useMock
+        ? await mockInterface.mockGetCategoryRefs(participantId, categories)
+        : await moiInterface.getCategoryRefs(participantId, categories);
 
       this.logger.info(
         {

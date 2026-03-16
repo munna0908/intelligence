@@ -1,0 +1,1785 @@
+syntax: 1
+engine:
+  kind: PISA
+  flags: []
+  version: 0.7.0
+kind: logic
+elements:
+- ptr: 0
+  kind: literal
+  data:
+    type: string
+    value: '0x06464f4f44'
+- ptr: 1
+  kind: literal
+  data:
+    type: string
+    value: '0x064845414c5448'
+- ptr: 2
+  kind: literal
+  data:
+    type: string
+    value: '0x0641444452455353'
+- ptr: 3
+  kind: literal
+  data:
+    type: string
+    value: '0x065041594d454e54'
+- ptr: 4
+  kind: literal
+  data:
+    type: string
+    value: '0x06524551554553544544'
+- ptr: 5
+  kind: literal
+  data:
+    type: string
+    value: '0x06414354495645'
+- ptr: 6
+  kind: literal
+  data:
+    type: string
+    value: '0x0644454e494544'
+- ptr: 7
+  kind: literal
+  data:
+    type: string
+    value: '0x0645585049524544'
+- ptr: 8
+  kind: literal
+  data:
+    type: string
+    value: '0x06455848415553544544'
+- ptr: 9
+  kind: literal
+  data:
+    type: string
+    value: '0x065245564f4b4544'
+- ptr: 10
+  kind: literal
+  data:
+    type: string
+    value: '0x0676616c6964'
+- ptr: 11
+  kind: literal
+  data:
+    type: string
+    value: '0x066e6f745f666f756e64'
+- ptr: 12
+  kind: literal
+  data:
+    type: string
+    value: '0x0677726f6e675f737461747573'
+- ptr: 13
+  kind: literal
+  data:
+    type: string
+    value: '0x066167656e745f6d69736d61746368'
+- ptr: 14
+  kind: literal
+  data:
+    type: string
+    value: '0x0665787069726564'
+- ptr: 15
+  kind: literal
+  data:
+    type: string
+    value: '0x06657868617573746564'
+- ptr: 16
+  kind: literal
+  data:
+    type: string
+    value: 0x066d697373696e675f63617465676f7279
+- ptr: 17
+  kind: literal
+  data:
+    type: string
+    value: '0x066d697373696e675f73636f7065'
+- ptr: 18
+  kind: literal
+  data:
+    type: string
+    value: 0x06496e76616c69642063617465676f72793a206d75737420626520464f4f442c204845414c54482c20414444524553532c206f72205041594d454e54
+- ptr: 19
+  kind: literal
+  data:
+    type: string
+    value: 0x0643617465676f7279207265666572656e636520646f6573206e6f74206578697374
+- ptr: 20
+  kind: literal
+  data:
+    type: string
+    value: '0x06'
+- ptr: 21
+  kind: literal
+  data:
+    type: string
+    value: 0x0653657373696f6e20616c72656164792065786973747320776974682074686973204944
+- ptr: 22
+  kind: literal
+  data:
+    type: string
+    value: 0x06496e76616c69642063617465676f727920696e20617070726f7665645f63617465676f72696573
+- ptr: 23
+  kind: literal
+  data:
+    type: string
+    value: 0x0653657373696f6e206e6f7420666f756e64
+- ptr: 24
+  kind: literal
+  data:
+    type: string
+    value: 0x0653657373696f6e206973206e6f7420696e2052455155455354454420737461747573
+- ptr: 25
+  kind: literal
+  data:
+    type: string
+    value: 0x06457870697265734174206d7573742062652067726561746572207468616e204973737565644174
+- ptr: 26
+  kind: literal
+  data:
+    type: string
+    value: 0x0653657373696f6e206861732065787069726564
+- ptr: 27
+  kind: literal
+  data:
+    type: string
+    value: 0x0653657373696f6e206973206e6f7420616374697665
+- ptr: 28
+  kind: literal
+  data:
+    type: string
+    value: 0x0653657373696f6e20686173206e6f2072656d61696e696e672075736573
+- ptr: 29
+  kind: literal
+  data:
+    type: string
+    value: 0x0653657373696f6e2063616e6e6f74206265207265766f6b65642066726f6d2063757272656e7420737461747573
+- ptr: 30
+  deps:
+  - 34
+  kind: typedef
+  data: '[]class.CategoryRef'
+- ptr: 31
+  deps:
+  - 34
+  kind: typedef
+  data: map[string]class.CategoryRef
+- ptr: 32
+  deps:
+  - 35
+  kind: typedef
+  data: map[string]class.SessionRecord
+- ptr: 33
+  deps:
+  - 37
+  kind: typedef
+  data: '[]class.SessionSummary'
+- ptr: 34
+  kind: class
+  data:
+    name: CategoryRef
+    fields:
+    - slot: 0
+      label: Category
+      type: string
+    - slot: 1
+      label: Ref
+      type: string
+    - slot: 2
+      label: SchemaVersion
+      type: string
+    - slot: 3
+      label: LastUpdated
+      type: u64
+    - slot: 4
+      label: Exists
+      type: bool
+    methods: []
+- ptr: 35
+  kind: class
+  data:
+    name: SessionRecord
+    fields:
+    - slot: 0
+      label: SessionId
+      type: string
+    - slot: 1
+      label: AgentId
+      type: string
+    - slot: 2
+      label: Status
+      type: string
+    - slot: 3
+      label: Purpose
+      type: string
+    - slot: 4
+      label: ApprovedCategories
+      type: '[]string'
+    - slot: 5
+      label: ApprovedScopes
+      type: '[]string'
+    - slot: 6
+      label: IssuedAt
+      type: u64
+    - slot: 7
+      label: ExpiresAt
+      type: u64
+    - slot: 8
+      label: RemainingUses
+      type: u64
+    - slot: 9
+      label: ApprovalRef
+      type: string
+    - slot: 10
+      label: RevocationReason
+      type: string
+    - slot: 11
+      label: Exists
+      type: bool
+    methods: []
+- ptr: 36
+  kind: class
+  data:
+    name: ValidationResult
+    fields:
+    - slot: 0
+      label: Valid
+      type: bool
+    - slot: 1
+      label: Reason
+      type: string
+    methods: []
+- ptr: 37
+  kind: class
+  data:
+    name: SessionSummary
+    fields:
+    - slot: 0
+      label: SessionId
+      type: string
+    - slot: 1
+      label: AgentId
+      type: string
+    - slot: 2
+      label: Status
+      type: string
+    - slot: 3
+      label: Purpose
+      type: string
+    - slot: 4
+      label: ExpiresAt
+      type: u64
+    methods: []
+- ptr: 38
+  deps:
+  - 34
+  - 37
+  kind: class
+  data:
+    name: IntelligenceObject
+    fields:
+    - slot: 0
+      label: ActorId
+      type: identifier
+    - slot: 1
+      label: Version
+      type: u64
+    - slot: 2
+      label: CategoryRefs
+      type: '[]class.CategoryRef'
+    - slot: 3
+      label: ActiveSessions
+      type: '[]class.SessionSummary'
+    - slot: 4
+      label: LastUpdatedAt
+      type: u64
+    methods: []
+- ptr: 39
+  deps:
+  - 34
+  - 35
+  kind: state
+  data:
+    mode: actor
+    fields:
+    - slot: 0
+      label: category_refs
+      type: map[string]class.CategoryRef
+    - slot: 1
+      label: sessions
+      type: map[string]class.SessionRecord
+    - slot: 2
+      label: version
+      type: u64
+    - slot: 3
+      label: last_updated_at
+      type: u64
+- ptr: 40
+  kind: callable
+  data:
+    name: IsValidCategory
+    mode: pure
+    kind: internal
+    accepts:
+    - slot: 0
+      label: category
+      type: string
+    returns:
+    - slot: 0
+      label: valid
+      type: bool
+    executes:
+      asm:
+      - OBTAIN $0 &0
+      - LDPTR1 $1 0x0
+      - LMAKE $1 $1
+      - EQ $1 $0 $1
+      - NOT $1 $1
+      - LDPTR1 $2 0xb
+      - JUMPI $2 $1
+      - PMAKE $1 &1
+      - NOT $1 $1
+      - YIELD $1 &0
+      - TERM
+      - DEST
+      - LDPTR1 $1 0x1
+      - LMAKE $1 $1
+      - EQ $1 $0 $1
+      - NOT $1 $1
+      - LDPTR1 $2 0x16
+      - JUMPI $2 $1
+      - PMAKE $1 &1
+      - NOT $1 $1
+      - YIELD $1 &0
+      - TERM
+      - DEST
+      - LDPTR1 $1 0x2
+      - LMAKE $1 $1
+      - EQ $1 $0 $1
+      - NOT $1 $1
+      - LDPTR1 $2 0x21
+      - JUMPI $2 $1
+      - PMAKE $1 &1
+      - NOT $1 $1
+      - YIELD $1 &0
+      - TERM
+      - DEST
+      - LDPTR1 $1 0x3
+      - LMAKE $1 $1
+      - EQ $0 $0 $1
+      - NOT $0 $0
+      - LDPTR1 $1 0x2c
+      - JUMPI $1 $0
+      - PMAKE $0 &1
+      - NOT $0 $0
+      - YIELD $0 &0
+      - TERM
+      - DEST
+      - PMAKE $0 &1
+      - YIELD $0 &0
+    catches: []
+- ptr: 41
+  kind: callable
+  data:
+    name: ContainsString
+    mode: pure
+    kind: internal
+    accepts:
+    - slot: 0
+      label: arr
+      type: '[]string'
+    - slot: 1
+      label: value
+      type: string
+    returns:
+    - slot: 0
+      label: found
+      type: bool
+    executes:
+      asm:
+      - PMAKE $0 &1
+      - YIELD $0 &0
+      - OBTAIN $0 &0
+      - PMAKE $1 &5
+      - SIZE $2 $0
+      - DEST
+      - LT $3 $1 $2
+      - NOT $3 $3
+      - LDPTR1 $4 0x19
+      - JUMPI $4 $3
+      - GETIDX $3 $0 $1
+      - OBTAIN $5 &1
+      - EQ $5 $3 $5
+      - NOT $5 $5
+      - LDPTR1 $6 0x14
+      - JUMPI $6 $5
+      - PMAKE $5 &1
+      - NOT $5 $5
+      - YIELD $5 &0
+      - TERM
+      - DEST
+      - DEST
+      - INCR $1
+      - LDPTR1 $4 0x5
+      - JUMP $4
+      - DEST
+    catches: []
+- ptr: 42
+  deps:
+  - 41
+  kind: callable
+  data:
+    name: IsSubset
+    mode: pure
+    kind: internal
+    accepts:
+    - slot: 0
+      label: required
+      type: '[]string'
+    - slot: 1
+      label: approved
+      type: '[]string'
+    returns:
+    - slot: 0
+      label: is_subset
+      type: bool
+    executes:
+      asm:
+      - PMAKE $0 &1
+      - NOT $0 $0
+      - YIELD $0 &0
+      - OBTAIN $0 &0
+      - PMAKE $1 &5
+      - SIZE $2 $0
+      - DEST
+      - LT $3 $1 $2
+      - NOT $3 $3
+      - LDPTR1 $4 0x1f
+      - JUMPI $4 $3
+      - GETIDX $3 $0 $1
+      - PMAKE $5 &1
+      - CARGS $6
+      - OBTAIN $7 &1
+      - SETFLD $6 &0 $7
+      - SETFLD $6 &1 $3
+      - LDPTR1 $7 0x29
+      - CALLC $6 $7 $6
+      - GETFLD $6 $6 &0
+      - COPY $5 $6
+      - LDPTR1 $6 0x1a
+      - JUMPI $6 $5
+      - PMAKE $5 &1
+      - YIELD $5 &0
+      - TERM
+      - DEST
+      - DEST
+      - INCR $1
+      - LDPTR1 $4 0x6
+      - JUMP $4
+      - DEST
+    catches: []
+- ptr: 43
+  deps:
+  - 18
+  - 34
+  - 40
+  - 39
+  kind: callable
+  data:
+    name: SetCategoryRef
+    mode: dynamic
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: category
+      type: string
+    - slot: 1
+      label: ref
+      type: string
+    - slot: 2
+      label: schema_version
+      type: string
+    - slot: 3
+      label: updated_at
+      type: u64
+    returns: []
+    executes:
+      asm:
+      - PMAKE $0 &1
+      - CARGS $1
+      - OBTAIN $2 &0
+      - SETFLD $1 &0 $2
+      - LDPTR1 $3 0x28
+      - CALLC $1 $3 $1
+      - GETFLD $1 $1 &0
+      - COPY $0 $1
+      - LDPTR1 $1 0xd
+      - JUMPI $1 $0
+      - LDPTR1 $0 0x12
+      - LMAKE $0 $0
+      - THROW $0
+      - DEST
+      - LDPTR1 $0 0x22
+      - MAKE $0 $0
+      - LDPTR1 $1 0x22
+      - MAKE $1 $1
+      - SETFLD $1 &0 $2
+      - OBTAIN $3 &1
+      - SETFLD $1 &1 $3
+      - OBTAIN $3 &2
+      - SETFLD $1 &2 $3
+      - OBTAIN $3 &3
+      - SETFLD $1 &3 $3
+      - PMAKE $4 &1
+      - NOT $4 $4
+      - SETFLD $1 &4 $4
+      - COPY $0 $1
+      - ORIGIN $1
+      - ALOAD $4 $1 &0
+      - GENKEY $5 $4 $2
+      - GENKEY $5 $4 $2
+      - DISPER $5 $0
+      - SETKEY $4 $2 $5
+      - STORE $4
+      - ORIGIN $0
+      - ALOAD $1 $0 &2
+      - GATHER $2 $1
+      - INCR $2
+      - DISPER $1 $2
+      - STORE $1
+      - ORIGIN $0
+      - ALOAD $1 $0 &3
+      - DISPER $1 $3
+      - STORE $1
+    catches: []
+- ptr: 44
+  deps:
+  - 19
+  - 20
+  - 34
+  - 39
+  kind: callable
+  data:
+    name: RemoveCategoryRef
+    mode: dynamic
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: category
+      type: string
+    - slot: 1
+      label: updated_at
+      type: u64
+    returns: []
+    executes:
+      asm:
+      - LDPTR1 $0 0x22
+      - MAKE $0 $0
+      - ORIGIN $1
+      - ALOAD $2 $1 &0
+      - OBTAIN $3 &0
+      - GETKEY $3 $2 $3
+      - GATHER $0 $3
+      - DUMP $2
+      - GETFLD $0 $0 &4
+      - LDPTR1 $1 0xe
+      - JUMPI $1 $0
+      - LDPTR1 $0 0x13
+      - LMAKE $0 $0
+      - THROW $0
+      - DEST
+      - LDPTR1 $0 0x22
+      - MAKE $0 $0
+      - LDPTR1 $1 0x22
+      - MAKE $1 $1
+      - OBTAIN $2 &0
+      - SETFLD $1 &0 $2
+      - LDPTR1 $3 0x14
+      - LMAKE $3 $3
+      - SETFLD $1 &1 $3
+      - LDPTR1 $3 0x14
+      - LMAKE $3 $3
+      - SETFLD $1 &2 $3
+      - PMAKE $3 &5
+      - SETFLD $1 &3 $3
+      - PMAKE $3 &1
+      - SETFLD $1 &4 $3
+      - COPY $0 $1
+      - ORIGIN $1
+      - ALOAD $3 $1 &0
+      - GENKEY $4 $3 $2
+      - GENKEY $4 $3 $2
+      - DISPER $4 $0
+      - SETKEY $3 $2 $4
+      - STORE $3
+      - ORIGIN $0
+      - ALOAD $1 $0 &2
+      - GATHER $2 $1
+      - INCR $2
+      - DISPER $1 $2
+      - STORE $1
+      - ORIGIN $0
+      - ALOAD $1 $0 &3
+      - OBTAIN $2 &1
+      - DISPER $1 $2
+      - STORE $1
+    catches: []
+- ptr: 45
+  deps:
+  - 34
+  - 39
+  kind: callable
+  data:
+    name: GetCategoryRef
+    mode: static
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: actor_id
+      type: identifier
+    - slot: 1
+      label: category
+      type: string
+    returns:
+    - slot: 0
+      label: cat_ref
+      type: class.CategoryRef
+    executes:
+      asm:
+      - LDPTR1 $0 0x22
+      - MAKE $0 $0
+      - OBTAIN $1 &0
+      - ALOAD $2 $1 &0
+      - OBTAIN $3 &1
+      - GETKEY $3 $2 $3
+      - GATHER $0 $3
+      - DUMP $2
+      - YIELD $0 &0
+    catches: []
+- ptr: 46
+  deps:
+  - 30
+  - 34
+  - 39
+  kind: callable
+  data:
+    name: ListCategoryRefs
+    mode: static
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: actor_id
+      type: identifier
+    returns:
+    - slot: 0
+      label: result
+      type: '[]class.CategoryRef'
+    executes:
+      asm:
+      - LDPTR1 $0 0x1e
+      - MAKE $0 $0
+      - PMAKE $1 &5
+      - LDPTR1 $2 0x1e
+      - VMAKE $1 $2 $1
+      - LDPTR1 $2 0x22
+      - MAKE $2 $2
+      - OBTAIN $3 &0
+      - ALOAD $4 $3 &0
+      - LDPTR1 $5 0x0
+      - LMAKE $5 $5
+      - GETKEY $5 $4 $5
+      - GATHER $2 $5
+      - DUMP $4
+      - GETFLD $3 $2 &4
+      - NOT $3 $3
+      - LDPTR1 $4 0x13
+      - JUMPI $4 $3
+      - APPEND $1 $2
+      - DEST
+      - LDPTR1 $2 0x22
+      - MAKE $2 $2
+      - OBTAIN $3 &0
+      - ALOAD $4 $3 &0
+      - LDPTR1 $5 0x1
+      - LMAKE $5 $5
+      - GETKEY $5 $4 $5
+      - GATHER $2 $5
+      - DUMP $4
+      - GETFLD $3 $2 &4
+      - NOT $3 $3
+      - LDPTR1 $4 0x22
+      - JUMPI $4 $3
+      - APPEND $1 $2
+      - DEST
+      - LDPTR1 $2 0x22
+      - MAKE $2 $2
+      - OBTAIN $3 &0
+      - ALOAD $4 $3 &0
+      - LDPTR1 $5 0x2
+      - LMAKE $5 $5
+      - GETKEY $5 $4 $5
+      - GATHER $2 $5
+      - DUMP $4
+      - GETFLD $3 $2 &4
+      - NOT $3 $3
+      - LDPTR1 $4 0x31
+      - JUMPI $4 $3
+      - APPEND $1 $2
+      - DEST
+      - LDPTR1 $2 0x22
+      - MAKE $2 $2
+      - OBTAIN $3 &0
+      - ALOAD $4 $3 &0
+      - LDPTR1 $5 0x3
+      - LMAKE $5 $5
+      - GETKEY $5 $4 $5
+      - GATHER $2 $5
+      - DUMP $4
+      - GETFLD $3 $2 &4
+      - NOT $3 $3
+      - LDPTR1 $4 0x40
+      - JUMPI $4 $3
+      - APPEND $1 $2
+      - DEST
+      - COPY $0 $1
+      - YIELD $0 &0
+    catches: []
+- ptr: 47
+  deps:
+  - 21
+  - 22
+  - 20
+  - 35
+  - 40
+  - 39
+  kind: callable
+  data:
+    name: CreateSessionRequest
+    mode: dynamic
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: session_id
+      type: string
+    - slot: 1
+      label: agent_id
+      type: string
+    - slot: 2
+      label: purpose
+      type: string
+    - slot: 3
+      label: approved_categories
+      type: '[]string'
+    - slot: 4
+      label: approved_scopes
+      type: '[]string'
+    - slot: 5
+      label: requested_uses
+      type: u64
+    - slot: 6
+      label: ttl_seconds
+      type: u64
+    - slot: 7
+      label: approval_ref
+      type: string
+    returns: []
+    executes:
+      asm:
+      - LDPTR1 $0 0x23
+      - MAKE $0 $0
+      - ORIGIN $1
+      - ALOAD $2 $1 &1
+      - OBTAIN $3 &0
+      - GETKEY $3 $2 $3
+      - GATHER $0 $3
+      - DUMP $2
+      - GETFLD $1 $0 &b
+      - NOT $1 $1
+      - LDPTR1 $2 0xf
+      - JUMPI $2 $1
+      - LDPTR1 $1 0x15
+      - LMAKE $1 $1
+      - THROW $1
+      - DEST
+      - OBTAIN $1 &3
+      - PMAKE $2 &5
+      - SIZE $3 $1
+      - DEST
+      - LT $4 $2 $3
+      - NOT $4 $4
+      - LDPTR1 $5 0x2a
+      - JUMPI $5 $4
+      - GETIDX $4 $1 $2
+      - PMAKE $6 &1
+      - CARGS $7
+      - SETFLD $7 &0 $4
+      - LDPTR1 $8 0x28
+      - CALLC $7 $8 $7
+      - GETFLD $7 $7 &0
+      - COPY $6 $7
+      - LDPTR1 $7 0x25
+      - JUMPI $7 $6
+      - LDPTR1 $6 0x16
+      - LMAKE $6 $6
+      - THROW $6
+      - DEST
+      - DEST
+      - INCR $2
+      - LDPTR1 $5 0x13
+      - JUMP $5
+      - DEST
+      - LDPTR1 $0 0x23
+      - MAKE $0 $0
+      - LDPTR1 $2 0x23
+      - MAKE $2 $2
+      - OBTAIN $3 &0
+      - SETFLD $2 &0 $3
+      - OBTAIN $4 &1
+      - SETFLD $2 &1 $4
+      - LDPTR1 $4 0x4
+      - LMAKE $4 $4
+      - SETFLD $2 &2 $4
+      - OBTAIN $4 &2
+      - SETFLD $2 &3 $4
+      - SETFLD $2 &4 $1
+      - OBTAIN $1 &4
+      - SETFLD $2 &5 $1
+      - PMAKE $1 &5
+      - SETFLD $2 &6 $1
+      - PMAKE $1 &5
+      - SETFLD $2 &7 $1
+      - OBTAIN $1 &5
+      - SETFLD $2 &8 $1
+      - OBTAIN $1 &7
+      - SETFLD $2 &9 $1
+      - LDPTR1 $1 0x14
+      - LMAKE $1 $1
+      - SETFLD $2 &a $1
+      - PMAKE $1 &1
+      - NOT $1 $1
+      - SETFLD $2 &b $1
+      - COPY $0 $2
+      - ORIGIN $1
+      - ALOAD $2 $1 &1
+      - GENKEY $4 $2 $3
+      - GENKEY $4 $2 $3
+      - DISPER $4 $0
+      - SETKEY $2 $3 $4
+      - STORE $2
+      - ORIGIN $0
+      - ALOAD $1 $0 &2
+      - GATHER $2 $1
+      - INCR $2
+      - DISPER $1 $2
+      - STORE $1
+    catches: []
+- ptr: 48
+  deps:
+  - 23
+  - 24
+  - 25
+  - 20
+  - 35
+  - 39
+  kind: callable
+  data:
+    name: ApproveSession
+    mode: dynamic
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: session_id
+      type: string
+    - slot: 1
+      label: issued_at
+      type: u64
+    - slot: 2
+      label: expires_at
+      type: u64
+    - slot: 3
+      label: remaining_uses
+      type: u64
+    - slot: 4
+      label: approval_ref
+      type: string
+    returns: []
+    executes:
+      asm:
+      - LDPTR1 $0 0x23
+      - MAKE $0 $0
+      - ORIGIN $1
+      - ALOAD $2 $1 &1
+      - OBTAIN $3 &0
+      - GETKEY $3 $2 $3
+      - GATHER $0 $3
+      - DUMP $2
+      - GETFLD $1 $0 &b
+      - LDPTR1 $2 0xe
+      - JUMPI $2 $1
+      - LDPTR1 $1 0x17
+      - LMAKE $1 $1
+      - THROW $1
+      - DEST
+      - GETFLD $1 $0 &2
+      - LDPTR1 $2 0x4
+      - LMAKE $2 $2
+      - EQ $1 $1 $2
+      - LDPTR1 $2 0x18
+      - JUMPI $2 $1
+      - LDPTR1 $1 0x18
+      - LMAKE $1 $1
+      - THROW $1
+      - DEST
+      - OBTAIN $1 &2
+      - OBTAIN $2 &1
+      - GT $3 $1 $2
+      - LDPTR1 $4 0x21
+      - JUMPI $4 $3
+      - LDPTR1 $3 0x19
+      - LMAKE $3 $3
+      - THROW $3
+      - DEST
+      - LDPTR1 $3 0x23
+      - MAKE $3 $3
+      - LDPTR1 $4 0x23
+      - MAKE $4 $4
+      - GETFLD $5 $0 &0
+      - SETFLD $4 &0 $5
+      - GETFLD $5 $0 &1
+      - SETFLD $4 &1 $5
+      - LDPTR1 $5 0x5
+      - LMAKE $5 $5
+      - SETFLD $4 &2 $5
+      - GETFLD $5 $0 &3
+      - SETFLD $4 &3 $5
+      - GETFLD $5 $0 &4
+      - SETFLD $4 &4 $5
+      - GETFLD $0 $0 &5
+      - SETFLD $4 &5 $0
+      - SETFLD $4 &6 $2
+      - SETFLD $4 &7 $1
+      - OBTAIN $0 &3
+      - SETFLD $4 &8 $0
+      - OBTAIN $0 &4
+      - SETFLD $4 &9 $0
+      - LDPTR1 $0 0x14
+      - LMAKE $0 $0
+      - SETFLD $4 &a $0
+      - PMAKE $0 &1
+      - NOT $0 $0
+      - SETFLD $4 &b $0
+      - COPY $3 $4
+      - ORIGIN $0
+      - ALOAD $1 $0 &1
+      - OBTAIN $4 &0
+      - GENKEY $5 $1 $4
+      - GENKEY $5 $1 $4
+      - DISPER $5 $3
+      - SETKEY $1 $4 $5
+      - STORE $1
+      - ORIGIN $0
+      - ALOAD $1 $0 &2
+      - GATHER $3 $1
+      - INCR $3
+      - DISPER $1 $3
+      - STORE $1
+      - ORIGIN $0
+      - ALOAD $1 $0 &3
+      - DISPER $1 $2
+      - STORE $1
+    catches: []
+- ptr: 49
+  deps:
+  - 23
+  - 24
+  - 35
+  - 39
+  kind: callable
+  data:
+    name: DenySession
+    mode: dynamic
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: session_id
+      type: string
+    - slot: 1
+      label: denial_reason
+      type: string
+    returns: []
+    executes:
+      asm:
+      - LDPTR1 $0 0x23
+      - MAKE $0 $0
+      - ORIGIN $1
+      - ALOAD $2 $1 &1
+      - OBTAIN $3 &0
+      - GETKEY $3 $2 $3
+      - GATHER $0 $3
+      - DUMP $2
+      - GETFLD $1 $0 &b
+      - LDPTR1 $2 0xe
+      - JUMPI $2 $1
+      - LDPTR1 $1 0x17
+      - LMAKE $1 $1
+      - THROW $1
+      - DEST
+      - GETFLD $1 $0 &2
+      - LDPTR1 $2 0x4
+      - LMAKE $2 $2
+      - EQ $1 $1 $2
+      - LDPTR1 $2 0x18
+      - JUMPI $2 $1
+      - LDPTR1 $1 0x18
+      - LMAKE $1 $1
+      - THROW $1
+      - DEST
+      - LDPTR1 $1 0x23
+      - MAKE $1 $1
+      - LDPTR1 $2 0x23
+      - MAKE $2 $2
+      - GETFLD $3 $0 &0
+      - SETFLD $2 &0 $3
+      - GETFLD $3 $0 &1
+      - SETFLD $2 &1 $3
+      - LDPTR1 $3 0x6
+      - LMAKE $3 $3
+      - SETFLD $2 &2 $3
+      - GETFLD $3 $0 &3
+      - SETFLD $2 &3 $3
+      - GETFLD $3 $0 &4
+      - SETFLD $2 &4 $3
+      - GETFLD $3 $0 &5
+      - SETFLD $2 &5 $3
+      - GETFLD $3 $0 &6
+      - SETFLD $2 &6 $3
+      - GETFLD $3 $0 &7
+      - SETFLD $2 &7 $3
+      - GETFLD $3 $0 &8
+      - SETFLD $2 &8 $3
+      - GETFLD $0 $0 &9
+      - SETFLD $2 &9 $0
+      - OBTAIN $0 &1
+      - SETFLD $2 &a $0
+      - PMAKE $0 &1
+      - NOT $0 $0
+      - SETFLD $2 &b $0
+      - COPY $1 $2
+      - ORIGIN $0
+      - ALOAD $2 $0 &1
+      - OBTAIN $3 &0
+      - GENKEY $4 $2 $3
+      - GENKEY $4 $2 $3
+      - DISPER $4 $1
+      - SETKEY $2 $3 $4
+      - STORE $2
+      - ORIGIN $0
+      - ALOAD $1 $0 &2
+      - GATHER $2 $1
+      - INCR $2
+      - DISPER $1 $2
+      - STORE $1
+    catches: []
+- ptr: 50
+  deps:
+  - 35
+  - 39
+  kind: callable
+  data:
+    name: GetSession
+    mode: static
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: actor_id
+      type: identifier
+    - slot: 1
+      label: session_id
+      type: string
+    returns:
+    - slot: 0
+      label: session
+      type: class.SessionRecord
+    executes:
+      asm:
+      - LDPTR1 $0 0x23
+      - MAKE $0 $0
+      - OBTAIN $1 &0
+      - ALOAD $2 $1 &1
+      - OBTAIN $3 &1
+      - GETKEY $3 $2 $3
+      - GATHER $0 $3
+      - DUMP $2
+      - YIELD $0 &0
+    catches: []
+- ptr: 51
+  deps:
+  - 36
+  - 42
+  - 39
+  kind: callable
+  data:
+    name: ValidateSession
+    mode: static
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: actor_id
+      type: identifier
+    - slot: 1
+      label: session_id
+      type: string
+    - slot: 2
+      label: agent_id
+      type: string
+    - slot: 3
+      label: required_categories
+      type: '[]string'
+    - slot: 4
+      label: required_scopes
+      type: '[]string'
+    - slot: 5
+      label: current_time
+      type: u64
+    returns:
+    - slot: 0
+      label: result
+      type: class.ValidationResult
+    executes:
+      asm:
+      - LDPTR1 $0 0x24
+      - MAKE $0 $0
+      - LDPTR1 $1 0x23
+      - MAKE $1 $1
+      - OBTAIN $2 &0
+      - ALOAD $3 $2 &1
+      - OBTAIN $4 &1
+      - GETKEY $4 $3 $4
+      - GATHER $1 $4
+      - DUMP $3
+      - GETFLD $2 $1 &b
+      - LDPTR1 $3 0x17
+      - JUMPI $3 $2
+      - LDPTR1 $2 0x24
+      - MAKE $2 $2
+      - PMAKE $3 &1
+      - SETFLD $2 &0 $3
+      - LDPTR1 $3 0xb
+      - LMAKE $3 $3
+      - SETFLD $2 &1 $3
+      - COPY $0 $2
+      - YIELD $0 &0
+      - TERM
+      - DEST
+      - GETFLD $2 $1 &2
+      - LDPTR1 $3 0x5
+      - LMAKE $3 $3
+      - EQ $2 $2 $3
+      - LDPTR1 $3 0x28
+      - JUMPI $3 $2
+      - LDPTR1 $2 0x24
+      - MAKE $2 $2
+      - PMAKE $3 &1
+      - SETFLD $2 &0 $3
+      - LDPTR1 $3 0xc
+      - LMAKE $3 $3
+      - SETFLD $2 &1 $3
+      - COPY $0 $2
+      - YIELD $0 &0
+      - TERM
+      - DEST
+      - GETFLD $2 $1 &1
+      - OBTAIN $3 &2
+      - EQ $2 $2 $3
+      - LDPTR1 $3 0x38
+      - JUMPI $3 $2
+      - LDPTR1 $2 0x24
+      - MAKE $2 $2
+      - PMAKE $3 &1
+      - SETFLD $2 &0 $3
+      - LDPTR1 $3 0xd
+      - LMAKE $3 $3
+      - SETFLD $2 &1 $3
+      - COPY $0 $2
+      - YIELD $0 &0
+      - TERM
+      - DEST
+      - OBTAIN $2 &5
+      - GETFLD $3 $1 &7
+      - GT $2 $2 $3
+      - NOT $2 $2
+      - LDPTR1 $3 0x49
+      - JUMPI $3 $2
+      - LDPTR1 $2 0x24
+      - MAKE $2 $2
+      - PMAKE $3 &1
+      - SETFLD $2 &0 $3
+      - LDPTR1 $3 0xe
+      - LMAKE $3 $3
+      - SETFLD $2 &1 $3
+      - COPY $0 $2
+      - YIELD $0 &0
+      - TERM
+      - DEST
+      - GETFLD $2 $1 &8
+      - PMAKE $3 &5
+      - EQ $2 $2 $3
+      - NOT $2 $2
+      - LDPTR1 $3 0x5a
+      - JUMPI $3 $2
+      - LDPTR1 $2 0x24
+      - MAKE $2 $2
+      - PMAKE $3 &1
+      - SETFLD $2 &0 $3
+      - LDPTR1 $3 0xf
+      - LMAKE $3 $3
+      - SETFLD $2 &1 $3
+      - COPY $0 $2
+      - YIELD $0 &0
+      - TERM
+      - DEST
+      - PMAKE $2 &1
+      - CARGS $3
+      - OBTAIN $4 &3
+      - SETFLD $3 &0 $4
+      - GETFLD $4 $1 &4
+      - SETFLD $3 &1 $4
+      - LDPTR1 $4 0x2a
+      - CALLC $3 $4 $3
+      - GETFLD $3 $3 &0
+      - COPY $2 $3
+      - LDPTR1 $3 0x71
+      - JUMPI $3 $2
+      - LDPTR1 $2 0x24
+      - MAKE $2 $2
+      - PMAKE $3 &1
+      - SETFLD $2 &0 $3
+      - LDPTR1 $3 0x10
+      - LMAKE $3 $3
+      - SETFLD $2 &1 $3
+      - COPY $0 $2
+      - YIELD $0 &0
+      - TERM
+      - DEST
+      - PMAKE $2 &1
+      - CARGS $3
+      - OBTAIN $4 &4
+      - SETFLD $3 &0 $4
+      - GETFLD $1 $1 &5
+      - SETFLD $3 &1 $1
+      - LDPTR1 $1 0x2a
+      - CALLC $1 $1 $3
+      - GETFLD $1 $1 &0
+      - COPY $2 $1
+      - NOT $1 $2
+      - NOT $1 $1
+      - LDPTR1 $2 0x8a
+      - JUMPI $2 $1
+      - LDPTR1 $1 0x24
+      - MAKE $1 $1
+      - PMAKE $2 &1
+      - SETFLD $1 &0 $2
+      - LDPTR1 $2 0x11
+      - LMAKE $2 $2
+      - SETFLD $1 &1 $2
+      - COPY $0 $1
+      - YIELD $0 &0
+      - TERM
+      - DEST
+      - LDPTR1 $1 0x24
+      - MAKE $1 $1
+      - PMAKE $2 &1
+      - NOT $2 $2
+      - SETFLD $1 &0 $2
+      - LDPTR1 $2 0xa
+      - LMAKE $2 $2
+      - SETFLD $1 &1 $2
+      - COPY $0 $1
+      - YIELD $0 &0
+    catches: []
+- ptr: 52
+  deps:
+  - 23
+  - 20
+  - 26
+  - 27
+  - 28
+  - 35
+  - 39
+  kind: callable
+  data:
+    name: ConsumeSessionUse
+    mode: dynamic
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: session_id
+      type: string
+    - slot: 1
+      label: current_time
+      type: u64
+    returns: []
+    executes:
+      asm:
+      - LDPTR1 $0 0x23
+      - MAKE $0 $0
+      - ORIGIN $1
+      - ALOAD $2 $1 &1
+      - OBTAIN $3 &0
+      - GETKEY $3 $2 $3
+      - GATHER $0 $3
+      - DUMP $2
+      - GETFLD $1 $0 &b
+      - LDPTR1 $2 0xe
+      - JUMPI $2 $1
+      - LDPTR1 $1 0x17
+      - LMAKE $1 $1
+      - THROW $1
+      - DEST
+      - OBTAIN $1 &1
+      - GETFLD $2 $0 &7
+      - GT $2 $1 $2
+      - NOT $2 $2
+      - LDPTR1 $3 0x46
+      - JUMPI $3 $2
+      - LDPTR1 $2 0x23
+      - MAKE $2 $2
+      - LDPTR1 $3 0x23
+      - MAKE $3 $3
+      - GETFLD $4 $0 &0
+      - SETFLD $3 &0 $4
+      - GETFLD $4 $0 &1
+      - SETFLD $3 &1 $4
+      - LDPTR1 $4 0x7
+      - LMAKE $4 $4
+      - SETFLD $3 &2 $4
+      - GETFLD $4 $0 &3
+      - SETFLD $3 &3 $4
+      - GETFLD $4 $0 &4
+      - SETFLD $3 &4 $4
+      - GETFLD $4 $0 &5
+      - SETFLD $3 &5 $4
+      - GETFLD $4 $0 &6
+      - SETFLD $3 &6 $4
+      - GETFLD $4 $0 &7
+      - SETFLD $3 &7 $4
+      - GETFLD $4 $0 &8
+      - SETFLD $3 &8 $4
+      - GETFLD $4 $0 &9
+      - SETFLD $3 &9 $4
+      - LDPTR1 $4 0x14
+      - LMAKE $4 $4
+      - SETFLD $3 &a $4
+      - PMAKE $4 &1
+      - NOT $4 $4
+      - SETFLD $3 &b $4
+      - COPY $2 $3
+      - ORIGIN $3
+      - ALOAD $4 $3 &1
+      - OBTAIN $5 &0
+      - GENKEY $6 $4 $5
+      - GENKEY $6 $4 $5
+      - DISPER $6 $2
+      - SETKEY $4 $5 $6
+      - STORE $4
+      - ORIGIN $2
+      - ALOAD $3 $2 &2
+      - GATHER $4 $3
+      - INCR $4
+      - DISPER $3 $4
+      - STORE $3
+      - LDPTR1 $2 0x1a
+      - LMAKE $2 $2
+      - THROW $2
+      - DEST
+      - GETFLD $2 $0 &2
+      - LDPTR1 $4 0x5
+      - LMAKE $4 $4
+      - EQ $2 $2 $4
+      - LDPTR1 $4 0x50
+      - JUMPI $4 $2
+      - LDPTR1 $2 0x1b
+      - LMAKE $2 $2
+      - THROW $2
+      - DEST
+      - GETFLD $2 $0 &8
+      - PMAKE $4 &5
+      - EQ $2 $2 $4
+      - NOT $2 $2
+      - LDPTR1 $4 0x88
+      - JUMPI $4 $2
+      - LDPTR1 $2 0x23
+      - MAKE $2 $2
+      - LDPTR1 $4 0x23
+      - MAKE $4 $4
+      - GETFLD $5 $0 &0
+      - SETFLD $4 &0 $5
+      - GETFLD $5 $0 &1
+      - SETFLD $4 &1 $5
+      - LDPTR1 $5 0x8
+      - LMAKE $5 $5
+      - SETFLD $4 &2 $5
+      - GETFLD $5 $0 &3
+      - SETFLD $4 &3 $5
+      - GETFLD $5 $0 &4
+      - SETFLD $4 &4 $5
+      - GETFLD $5 $0 &5
+      - SETFLD $4 &5 $5
+      - GETFLD $5 $0 &6
+      - SETFLD $4 &6 $5
+      - GETFLD $5 $0 &7
+      - SETFLD $4 &7 $5
+      - PMAKE $5 &5
+      - SETFLD $4 &8 $5
+      - GETFLD $5 $0 &9
+      - SETFLD $4 &9 $5
+      - LDPTR1 $5 0x14
+      - LMAKE $5 $5
+      - SETFLD $4 &a $5
+      - PMAKE $5 &1
+      - NOT $5 $5
+      - SETFLD $4 &b $5
+      - COPY $2 $4
+      - ORIGIN $4
+      - ALOAD $5 $4 &1
+      - OBTAIN $6 &0
+      - GENKEY $7 $5 $6
+      - GENKEY $7 $5 $6
+      - DISPER $7 $2
+      - SETKEY $5 $6 $7
+      - STORE $5
+      - ORIGIN $2
+      - ALOAD $3 $2 &2
+      - GATHER $4 $3
+      - INCR $4
+      - DISPER $3 $4
+      - STORE $3
+      - LDPTR1 $2 0x1c
+      - LMAKE $2 $2
+      - THROW $2
+      - DEST
+      - PMAKE $2 &5
+      - GETFLD $4 $0 &8
+      - PMAKE $5 &5
+      - INCR $5
+      - SUB $4 $4 $5
+      - COPY $2 $4
+      - PMAKE $4 &3
+      - LDPTR1 $5 0x5
+      - LMAKE $5 $5
+      - COPY $4 $5
+      - PMAKE $5 &5
+      - EQ $5 $2 $5
+      - NOT $5 $5
+      - LDPTR1 $6 0x9b
+      - JUMPI $6 $5
+      - LDPTR1 $5 0x8
+      - LMAKE $5 $5
+      - COPY $4 $5
+      - DEST
+      - LDPTR1 $5 0x23
+      - MAKE $5 $5
+      - LDPTR1 $6 0x23
+      - MAKE $6 $6
+      - GETFLD $7 $0 &0
+      - SETFLD $6 &0 $7
+      - GETFLD $7 $0 &1
+      - SETFLD $6 &1 $7
+      - SETFLD $6 &2 $4
+      - GETFLD $4 $0 &3
+      - SETFLD $6 &3 $4
+      - GETFLD $4 $0 &4
+      - SETFLD $6 &4 $4
+      - GETFLD $4 $0 &5
+      - SETFLD $6 &5 $4
+      - GETFLD $4 $0 &6
+      - SETFLD $6 &6 $4
+      - GETFLD $4 $0 &7
+      - SETFLD $6 &7 $4
+      - SETFLD $6 &8 $2
+      - GETFLD $0 $0 &9
+      - SETFLD $6 &9 $0
+      - LDPTR1 $0 0x14
+      - LMAKE $0 $0
+      - SETFLD $6 &a $0
+      - PMAKE $0 &1
+      - NOT $0 $0
+      - SETFLD $6 &b $0
+      - COPY $5 $6
+      - ORIGIN $0
+      - ALOAD $2 $0 &1
+      - OBTAIN $4 &0
+      - GENKEY $6 $2 $4
+      - GENKEY $6 $2 $4
+      - DISPER $6 $5
+      - SETKEY $2 $4 $6
+      - STORE $2
+      - ORIGIN $0
+      - ALOAD $3 $0 &2
+      - GATHER $2 $3
+      - INCR $2
+      - DISPER $3 $2
+      - STORE $3
+      - ORIGIN $0
+      - ALOAD $2 $0 &3
+      - DISPER $2 $1
+      - STORE $2
+    catches: []
+- ptr: 53
+  deps:
+  - 23
+  - 29
+  - 35
+  - 39
+  kind: callable
+  data:
+    name: RevokeSession
+    mode: dynamic
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: session_id
+      type: string
+    - slot: 1
+      label: revocation_reason
+      type: string
+    returns: []
+    executes:
+      asm:
+      - LDPTR1 $0 0x23
+      - MAKE $0 $0
+      - ORIGIN $1
+      - ALOAD $2 $1 &1
+      - OBTAIN $3 &0
+      - GETKEY $3 $2 $3
+      - GATHER $0 $3
+      - DUMP $2
+      - GETFLD $1 $0 &b
+      - LDPTR1 $2 0xe
+      - JUMPI $2 $1
+      - LDPTR1 $1 0x17
+      - LMAKE $1 $1
+      - THROW $1
+      - DEST
+      - PMAKE $1 &1
+      - NOT $1 $1
+      - GETFLD $2 $0 &2
+      - LDPTR1 $3 0x5
+      - LMAKE $3 $3
+      - EQ $2 $2 $3
+      - NOT $2 $2
+      - AND $1 $1 $2
+      - NOT $2 $1
+      - LDPTR1 $3 0x20
+      - JUMPI $3 $2
+      - GETFLD $2 $0 &2
+      - LDPTR1 $3 0x4
+      - LMAKE $3 $3
+      - EQ $2 $2 $3
+      - NOT $2 $2
+      - AND $1 $1 $2
+      - DEST
+      - NOT $1 $1
+      - LDPTR1 $2 0x27
+      - JUMPI $2 $1
+      - LDPTR1 $1 0x1d
+      - LMAKE $1 $1
+      - THROW $1
+      - DEST
+      - LDPTR1 $1 0x23
+      - MAKE $1 $1
+      - LDPTR1 $2 0x23
+      - MAKE $2 $2
+      - GETFLD $3 $0 &0
+      - SETFLD $2 &0 $3
+      - GETFLD $3 $0 &1
+      - SETFLD $2 &1 $3
+      - LDPTR1 $3 0x9
+      - LMAKE $3 $3
+      - SETFLD $2 &2 $3
+      - GETFLD $3 $0 &3
+      - SETFLD $2 &3 $3
+      - GETFLD $3 $0 &4
+      - SETFLD $2 &4 $3
+      - GETFLD $3 $0 &5
+      - SETFLD $2 &5 $3
+      - GETFLD $3 $0 &6
+      - SETFLD $2 &6 $3
+      - GETFLD $3 $0 &7
+      - SETFLD $2 &7 $3
+      - GETFLD $3 $0 &8
+      - SETFLD $2 &8 $3
+      - GETFLD $0 $0 &9
+      - SETFLD $2 &9 $0
+      - OBTAIN $0 &1
+      - SETFLD $2 &a $0
+      - PMAKE $0 &1
+      - NOT $0 $0
+      - SETFLD $2 &b $0
+      - COPY $1 $2
+      - ORIGIN $0
+      - ALOAD $2 $0 &1
+      - OBTAIN $3 &0
+      - GENKEY $4 $2 $3
+      - GENKEY $4 $2 $3
+      - DISPER $4 $1
+      - SETKEY $2 $3 $4
+      - STORE $2
+      - ORIGIN $0
+      - ALOAD $1 $0 &2
+      - GATHER $2 $1
+      - INCR $2
+      - DISPER $1 $2
+      - STORE $1
+    catches: []
+- ptr: 54
+  deps:
+  - 30
+  - 33
+  - 38
+  - 39
+  kind: callable
+  data:
+    name: GetIntelligenceObject
+    mode: static
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: actor_id
+      type: identifier
+    returns:
+    - slot: 0
+      label: intel_obj
+      type: class.IntelligenceObject
+    executes:
+      asm:
+      - LDPTR1 $0 0x26
+      - MAKE $0 $0
+      - PMAKE $1 &5
+      - OBTAIN $2 &0
+      - ALOAD $3 $2 &2
+      - GATHER $1 $3
+      - DUMP $3
+      - PMAKE $3 &5
+      - ALOAD $4 $2 &3
+      - GATHER $3 $4
+      - DUMP $4
+      - PMAKE $4 &5
+      - LDPTR1 $5 0x1e
+      - VMAKE $4 $5 $4
+      - LDPTR1 $5 0x22
+      - MAKE $5 $5
+      - ALOAD $6 $2 &0
+      - LDPTR1 $7 0x0
+      - LMAKE $7 $7
+      - GETKEY $7 $6 $7
+      - GATHER $5 $7
+      - DUMP $6
+      - GETFLD $6 $5 &4
+      - NOT $6 $6
+      - LDPTR1 $7 0x1b
+      - JUMPI $7 $6
+      - APPEND $4 $5
+      - DEST
+      - LDPTR1 $5 0x22
+      - MAKE $5 $5
+      - ALOAD $6 $2 &0
+      - LDPTR1 $7 0x1
+      - LMAKE $7 $7
+      - GETKEY $7 $6 $7
+      - GATHER $5 $7
+      - DUMP $6
+      - GETFLD $6 $5 &4
+      - NOT $6 $6
+      - LDPTR1 $7 0x29
+      - JUMPI $7 $6
+      - APPEND $4 $5
+      - DEST
+      - LDPTR1 $5 0x22
+      - MAKE $5 $5
+      - ALOAD $6 $2 &0
+      - LDPTR1 $7 0x2
+      - LMAKE $7 $7
+      - GETKEY $7 $6 $7
+      - GATHER $5 $7
+      - DUMP $6
+      - GETFLD $6 $5 &4
+      - NOT $6 $6
+      - LDPTR1 $7 0x37
+      - JUMPI $7 $6
+      - APPEND $4 $5
+      - DEST
+      - LDPTR1 $5 0x22
+      - MAKE $5 $5
+      - ALOAD $6 $2 &0
+      - LDPTR1 $7 0x3
+      - LMAKE $7 $7
+      - GETKEY $7 $6 $7
+      - GATHER $5 $7
+      - DUMP $6
+      - GETFLD $6 $5 &4
+      - NOT $6 $6
+      - LDPTR1 $7 0x45
+      - JUMPI $7 $6
+      - APPEND $4 $5
+      - DEST
+      - PMAKE $5 &5
+      - LDPTR1 $6 0x21
+      - VMAKE $5 $6 $5
+      - LDPTR1 $6 0x26
+      - MAKE $6 $6
+      - SETFLD $6 &0 $2
+      - SETFLD $6 &1 $1
+      - SETFLD $6 &2 $4
+      - SETFLD $6 &3 $5
+      - SETFLD $6 &4 $3
+      - COPY $0 $6
+      - YIELD $0 &0
+    catches: []
+- ptr: 55
+  deps:
+  - 39
+  kind: callable
+  data:
+    name: GetVersion
+    mode: static
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: actor_id
+      type: identifier
+    returns:
+    - slot: 0
+      label: ver
+      type: u64
+    executes:
+      asm:
+      - OBTAIN $0 &0
+      - ALOAD $1 $0 &2
+      - YIELD $1 &0
+      - DUMP $1
+    catches: []
+- ptr: 56
+  deps:
+  - 39
+  kind: callable
+  data:
+    name: GetLastUpdatedAt
+    mode: static
+    kind: invoke
+    accepts:
+    - slot: 0
+      label: actor_id
+      type: identifier
+    returns:
+    - slot: 0
+      label: last_updated
+      type: u64
+    executes:
+      asm:
+      - OBTAIN $0 &0
+      - ALOAD $1 $0 &3
+      - YIELD $1 &0
+      - DUMP $1
+    catches: []

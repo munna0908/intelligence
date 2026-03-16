@@ -1,12 +1,22 @@
 /**
  * Application configuration loaded from environment variables
+ * Uses dotenv-flow for multi-environment support
  */
+
+import dotenvFlow from 'dotenv-flow';
+import path from 'path';
+
+// Load environment files from env/ directory
+dotenvFlow.config({
+  path: path.resolve(process.cwd(), 'env'),
+  node_env: process.env['NODE_ENV'] || 'local',
+});
 
 export interface Config {
   server: {
     port: number;
     host: string;
-    nodeEnv: 'development' | 'production' | 'test';
+    nodeEnv: 'local' | 'development' | 'production' | 'test';
   };
   moi: {
     networkUrl: string;
@@ -54,11 +64,11 @@ export function loadConfig(): Config {
     server: {
       port: getEnvNumber('PORT', 3000),
       host: getEnvString('HOST', '0.0.0.0'),
-      nodeEnv: getEnvString('NODE_ENV', 'development') as Config['server']['nodeEnv'],
+      nodeEnv: getEnvString('NODE_ENV', 'local') as Config['server']['nodeEnv'],
     },
     moi: {
-      networkUrl: getEnvString('MOI_NETWORK_URL', 'https://voyage-rpc.moi.technology/babylon/'),
-      networkId: getEnvString('MOI_NETWORK_ID', 'babylon'),
+      networkUrl: getEnvString('MOI_NETWORK_URL', 'https://dev.voyage-rpc.moi.technology/devnet/v2'),
+      networkId: getEnvString('MOI_NETWORK_ID', 'devnet'),
       useMockAdapter: getEnvBoolean('USE_MOCK_ADAPTER', true),
       intelligenceLogicId: getEnvString('MOI_INTELLIGENCE_LOGIC_ID', ''),
     },

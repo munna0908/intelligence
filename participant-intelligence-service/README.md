@@ -39,6 +39,16 @@ The participant has an on-chain Participant Intelligence Engine object that stor
 4. **Reads are simple HTTP APIs** backed by MOI JS SDK calls
 5. **Writes use prepare → sign → submit flow** - External signing
 
+## Tech Stack
+
+- **Runtime**: Node.js 18+
+- **Language**: TypeScript
+- **Framework**: Express.js
+- **Validation**: Zod
+- **Logging**: Pino
+- **Testing**: Vitest + Supertest
+- **MOI Integration**: js-moi-sdk
+
 ## Why MOI JS SDK?
 
 The service uses the [MOI JS SDK](https://js-moi-sdk.docs.moi.technology/) as the primary protocol integration layer, similar to how ethers.js or web3.js are used in Ethereum-based systems. The SDK provides:
@@ -58,6 +68,19 @@ The service uses the [MOI JS SDK](https://js-moi-sdk.docs.moi.technology/) as th
 | PAYMENT | `finance.payment.read` |
 
 ## API Reference
+
+### Health Check
+
+#### GET /health
+
+Returns service health status.
+
+```json
+{
+  "status": "ok",
+  "service": "participant-intelligence-service"
+}
+```
 
 ### Read APIs
 
@@ -314,11 +337,14 @@ npm install
 
 ### Configuration
 
-Copy the example environment file:
+The service uses **dotenv-flow** for environment-based configuration. Environment files are stored in the `env/` directory:
 
-```bash
-cp .env.example .env
-```
+| File | Environment | Description |
+|------|-------------|-------------|
+| `env/.env.local` | local | Local development (mock adapter, debug logging) |
+| `env/.env.development` | development | Dev environment (real adapter) |
+| `env/.env.production` | production | Production settings |
+| `env/.env.test` | test | Test environment (silent logging) |
 
 Key configuration options:
 
@@ -326,8 +352,8 @@ Key configuration options:
 |----------|---------|-------------|
 | `PORT` | 3000 | Server port |
 | `HOST` | 0.0.0.0 | Server host |
-| `NODE_ENV` | development | Environment |
-| `MOI_NETWORK_URL` | https://voyage-rpc.moi.technology/babylon/ | MOI RPC endpoint |
+| `NODE_ENV` | local | Environment (local/development/production/test) |
+| `MOI_NETWORK_URL` | https://dev.voyage-rpc.moi.technology/devnet/v2 | MOI RPC endpoint |
 | `MOI_INTELLIGENCE_LOGIC_ID` | (required for production) | Deployed contract Logic ID |
 | `USE_MOCK_ADAPTER` | true | Use mock adapter for local dev |
 | `LOG_LEVEL` | info | Logging level |
@@ -337,13 +363,15 @@ Key configuration options:
 
 **Development mode (with hot reload):**
 ```bash
-npm run dev
+npm run dev          # Uses local environment
+npm run dev:dev      # Uses development environment
+npm run dev:prod     # Uses production environment
 ```
 
 **Production mode:**
 ```bash
 npm run build
-npm start
+NODE_ENV=production npm start
 ```
 
 ### Running Tests
@@ -357,31 +385,36 @@ npm run test:coverage # With coverage
 ### Sample API Calls
 
 ```bash
-# Make the script executable
-chmod +x scripts/curl-examples.sh
-
-# Run all examples
-./scripts/curl-examples.sh
-
-# Or run individual commands:
+# Health check
 curl http://localhost:3000/health
+
+# Get intelligence object
 curl http://localhost:3000/v1/intelligence/participant_001
+
+# Get category refs
+curl -X POST http://localhost:3000/v1/categories/get \
+  -H "Content-Type: application/json" \
+  -d '{"participantId": "participant_001", "categories": ["FOOD", "HEALTH"]}'
+
+# Or run the examples script:
+chmod +x scripts/curl-examples.sh
+./scripts/curl-examples.sh
 ```
 
 ## Mock Adapter
 
-The service includes a mock MOI SDK adapter for local development without requiring a real MOI network connection.
+The service includes a mock MOI interface for local development without requiring a real MOI network connection.
 
 ### How Mocks Work
 
-- Set `USE_MOCK_ADAPTER=true` in `.env`
-- The mock adapter simulates contract state in memory
+- Set `USE_MOCK_ADAPTER=true` in your environment
+- The mock interface simulates contract state in memory
 - Includes pre-seeded sample participants and sessions
 - State changes are applied immediately (no actual network delay)
 
 ### Sample Mock Data
 
-The mock adapter seeds two participants:
+The mock interface seeds two participants:
 
 | Participant ID | Categories | Sessions |
 |----------------|------------|----------|
@@ -405,16 +438,13 @@ coco compile
 
 This generates `intelligence.json` containing the compiled contract.
 
-### Deploy to MOI Network
-
-Use the MOI CLI or SDK to deploy the compiled contract:
+### Deploy to MOI Devnet
 
 ```bash
-# Using MOI CLI (example)
-moi deploy ./contract/intelligence.json --network babylon
+npm run deploy:devnet
 ```
 
-After deployment, you'll receive a **Logic ID** (e.g., `0x0800007d70c34ed6ec4384c75d469894052647a078b33ac0f08db0d3751c1fce29a49a`).
+After deployment, update your environment file with the returned **Logic ID**.
 
 ### Contract Endpoints
 
@@ -453,70 +483,86 @@ See "Deploying the Contract" above.
 
 ### 3. Configure environment
 
+Edit `env/.env.development` or `env/.env.production`:
+
 ```bash
-# .env
 USE_MOCK_ADAPTER=false
-MOI_NETWORK_URL=https://voyage-rpc.moi.technology/babylon/
+MOI_NETWORK_URL=https://dev.voyage-rpc.moi.technology/devnet/v2
 MOI_INTELLIGENCE_LOGIC_ID=0x0800007d...your_logic_id
 ```
 
 ### 4. Start the service
 
 ```bash
-npm run dev
+NODE_ENV=development npm run dev
 ```
 
-The real adapter will:
+The real interface will:
 - Connect to the MOI network via `JsonRpcProvider`
 - Initialize `LogicDriver` with your deployed contract
 - Call contract routines for reads (`GetSession`, `ValidateSession`, etc.)
 - Submit interactions for writes (`SetCategoryRef`, `CreateSessionRequest`, etc.)
 
-### Real Adapter Features
-
-The `RealMoiSdkAdapter` in `src/adapters/moi-sdk/real.ts`:
-
-- **Lazy initialization** - LogicDriver is created on first use
-- **Type-safe mapping** - Contract responses mapped to TypeScript domain models
-- **On-chain validation** - Uses contract's `ValidateSession` endpoint
-- **BigInt handling** - Properly converts contract bigints to numbers
-
 ## Project Structure
 
 ```
-contract/
-├── intelligence.coco      # Coco smart contract source
-├── coco.nut               # Coco manifest file
-└── intelligence.json      # Compiled contract (generated)
-
-src/
-├── app.ts                 # Fastify app setup
-├── server.ts              # Entry point
-├── config/                # Configuration loading
-├── routes/                # Route registration
-├── handlers/              # Request handlers
-│   ├── intelligence.ts
-│   ├── sessions.ts
-│   └── writes.ts
-├── services/              # Business logic
-│   ├── intelligence/
-│   ├── sessions/
-│   └── writes/
-├── adapters/
-│   └── moi-sdk/           # MOI SDK adapter layer
-│       ├── interface.ts   # Adapter interface
-│       ├── mock.ts        # Mock implementation
-│       ├── real.ts        # Real MOI SDK implementation
-│       └── index.ts       # Factory
-├── domain/                # Domain models & types
-├── validation/            # Zod schemas
-├── logging/               # Structured logging
-└── utils/                 # Utility functions
-
-tests/
-├── setup.ts               # Test setup
-├── unit/                  # Unit tests
-└── integration/           # Integration tests
+participant-intelligence-service/
+├── env/                           # Environment configuration files
+│   ├── .env.local                 # Local development
+│   ├── .env.development           # Development environment
+│   ├── .env.production            # Production environment
+│   └── .env.test                  # Test environment
+├── contract/                      # Coco smart contract
+│   ├── intelligence.coco          # Contract source
+│   ├── coco.nut                   # Coco manifest
+│   └── intelligence.json          # Compiled contract
+├── scripts/                       # Deployment & utility scripts
+├── src/
+│   ├── server.ts                  # Express entry point
+│   ├── config/
+│   │   └── index.ts               # Configuration loader (dotenv-flow)
+│   ├── versions/v1/               # API version 1
+│   │   ├── version.router.ts      # Route aggregator
+│   │   ├── controller/            # Request handlers
+│   │   │   ├── intelligence.controller.ts
+│   │   │   ├── sessions.controller.ts
+│   │   │   ├── writes.controller.ts
+│   │   │   └── health.controller.ts
+│   │   └── routes/                # Route definitions
+│   │       ├── intelligence.router.ts
+│   │       ├── sessions.router.ts
+│   │       ├── writes.router.ts
+│   │       └── health.router.ts
+│   ├── services/                  # Business logic
+│   │   ├── intelligence.service.ts
+│   │   ├── sessions.service.ts
+│   │   └── writes.service.ts
+│   ├── moi/                       # MOI network integration
+│   │   ├── config/
+│   │   │   └── provider.config.ts # JsonRpcProvider initialization
+│   │   └── interface/             # MOI interfaces
+│   │       ├── intelligence.interface.ts
+│   │       ├── sessions.interface.ts
+│   │       ├── writes.interface.ts
+│   │       └── mock.interface.ts  # Mock implementation
+│   ├── middlewares/               # Express middleware
+│   │   ├── logger.middleware.ts
+│   │   ├── error.middleware.ts
+│   │   └── validation.middleware.ts
+│   ├── domain/                    # Domain models & types
+│   │   ├── types.ts
+│   │   └── models.ts
+│   ├── validation/                # Zod schemas
+│   │   └── schemas.ts
+│   ├── logging/                   # Structured logging (Pino)
+│   │   └── index.ts
+│   └── utils/                     # Utility functions
+│       ├── crypto.utils.ts        # ID generation, hashing
+│       └── response.utils.ts      # HTTP response helpers
+└── tests/
+    ├── setup.ts                   # Test setup
+    ├── unit/                      # Unit tests
+    └── integration/               # Integration tests
 ```
 
 ## Important Design Rules
@@ -525,7 +571,7 @@ tests/
 2. **This service is NOT OpenClaw** - No wallet UI or user-facing features
 3. **This service is the control plane** - State and authorization only
 4. **All writes require signatures** - No bypass for state mutations
-5. **MOI SDK adapter is the only network layer** - All chain interactions flow through it
+5. **MOI interface is the only network layer** - All chain interactions flow through it
 
 ## Logging
 

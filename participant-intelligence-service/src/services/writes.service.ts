@@ -4,25 +4,25 @@
  * Handles preparation and submission of signed writes to the MOI network.
  */
 
-import type { IMoiSdkAdapter } from '../../adapters/moi-sdk/index.js';
-import { getMoiSdkAdapter } from '../../adapters/moi-sdk/index.js';
+import * as moiInterface from '../moi/interface/writes.interface.js';
+import * as mockInterface from '../moi/interface/mock.interface.js';
 import type {
   PrepareWriteRequest,
   PrepareWriteResponse,
   SubmitWriteRequest,
   SubmitWriteResponse,
   TransactionStatusResponse,
-} from '../../domain/models.js';
-import { ACTION_METHOD_MAP } from '../../domain/models.js';
-import type { WriteAction } from '../../domain/types.js';
-import { getLogger } from '../../logging/index.js';
+} from '../domain/models.js';
+import type { WriteAction } from '../domain/types.js';
+import { getConfig } from '../config/index.js';
+import { getLogger } from '../logging/index.js';
 import {
   updateCategoryRefParamsSchema,
   createSessionRequestParamsSchema,
   approveSessionParamsSchema,
   denySessionParamsSchema,
   revokeSessionParamsSchema,
-} from '../../validation/schemas.js';
+} from '../validation/schemas.js';
 import type { z } from 'zod';
 
 // Action-specific parameter schemas
@@ -54,10 +54,10 @@ export interface IWritesService {
 
 export class WritesService implements IWritesService {
   private logger = getLogger().child({ service: 'writes' });
-  private adapter: IMoiSdkAdapter;
+  private useMock: boolean;
 
-  constructor(adapter?: IMoiSdkAdapter) {
-    this.adapter = adapter ?? getMoiSdkAdapter();
+  constructor() {
+    this.useMock = getConfig().moi.useMockAdapter;
   }
 
   /**
@@ -79,12 +79,10 @@ export class WritesService implements IWritesService {
       const paramsSchema = ACTION_PARAMS_SCHEMAS[action];
       const validatedParams = paramsSchema.parse(params);
 
-      // Prepare the contract write via adapter
-      const prepared = await this.adapter.prepareContractWrite(
-        action,
-        validatedParams,
-        participantId
-      );
+      // Prepare the contract write via interface
+      const prepared = this.useMock
+        ? await mockInterface.mockPrepareContractWrite(action, validatedParams, participantId)
+        : await moiInterface.prepareContractWrite(action, validatedParams, participantId);
 
       // Generate human-readable summary
       const summaryGenerator = ACTION_SUMMARIES[action];
@@ -137,14 +135,15 @@ export class WritesService implements IWritesService {
         action,
         contract: payload.contract,
         method: payload.method,
-        // Don't log full signature
         signaturePrefix: signature.slice(0, 10) + '...',
       },
       'Submitting signed write'
     );
 
     try {
-      const result = await this.adapter.submitSignedWrite(payload, signature);
+      const result = this.useMock
+        ? await mockInterface.mockSubmitSignedWrite(payload, signature)
+        : await moiInterface.submitSignedWrite(payload, signature);
 
       if (!result.success) {
         this.logger.warn(
@@ -186,7 +185,9 @@ export class WritesService implements IWritesService {
     this.logger.info({ txHash }, 'Fetching transaction status');
 
     try {
-      const status = await this.adapter.getTransactionStatus(txHash);
+      const status = this.useMock
+        ? await mockInterface.mockGetTransactionStatus(txHash)
+        : await moiInterface.getTransactionStatus(txHash);
 
       this.logger.info({ txHash, status }, 'Transaction status retrieved');
 

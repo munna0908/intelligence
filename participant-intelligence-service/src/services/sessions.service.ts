@@ -4,19 +4,19 @@
  * Handles session lifecycle management and validation.
  */
 
-import type { IMoiSdkAdapter } from '../../adapters/moi-sdk/index.js';
-import { getMoiSdkAdapter } from '../../adapters/moi-sdk/index.js';
+import * as moiInterface from '../moi/interface/sessions.interface.js';
+import * as mockInterface from '../moi/interface/mock.interface.js';
 import type {
   Session,
   EnsureSessionRequest,
   EnsureSessionResponse,
   ValidateSessionRequest,
   ValidateSessionResponse,
-} from '../../domain/models.js';
-import { ACTION_METHOD_MAP } from '../../domain/models.js';
-import { getCurrentTimestamp, generateSessionId, computeSigningDigest, generateNonce } from '../../utils/index.js';
-import { getConfig } from '../../config/index.js';
-import { getLogger } from '../../logging/index.js';
+} from '../domain/models.js';
+import { ACTION_METHOD_MAP } from '../domain/models.js';
+import { getCurrentTimestamp, generateSessionId, computeSigningDigest, generateNonce } from '../utils/crypto.utils.js';
+import { getConfig } from '../config/index.js';
+import { getLogger } from '../logging/index.js';
 
 export interface ISessionsService {
   getSession(participantId: string, sessionId: string): Promise<Session | null>;
@@ -26,11 +26,10 @@ export interface ISessionsService {
 
 export class SessionsService implements ISessionsService {
   private logger = getLogger().child({ service: 'sessions' });
-  private adapter: IMoiSdkAdapter;
-  private config = getConfig();
+  private useMock: boolean;
 
-  constructor(adapter?: IMoiSdkAdapter) {
-    this.adapter = adapter ?? getMoiSdkAdapter();
+  constructor() {
+    this.useMock = getConfig().moi.useMockAdapter;
   }
 
   /**
@@ -40,7 +39,9 @@ export class SessionsService implements ISessionsService {
     this.logger.info({ participantId, sessionId }, 'Fetching session');
 
     try {
-      const session = await this.adapter.getSession(participantId, sessionId);
+      const session = this.useMock
+        ? await mockInterface.mockGetSession(participantId, sessionId)
+        : await moiInterface.getSession(participantId, sessionId);
 
       if (!session) {
         this.logger.info({ participantId, sessionId }, 'Session not found');
@@ -85,13 +86,21 @@ export class SessionsService implements ISessionsService {
       const currentTime = getCurrentTimestamp();
 
       // Check for existing valid session
-      const existingSession = await this.adapter.findValidSession(
-        participantId,
-        agentId,
-        requiredCategories,
-        requiredScopes,
-        currentTime
-      );
+      const existingSession = this.useMock
+        ? await mockInterface.mockFindValidSession(
+            participantId,
+            agentId,
+            requiredCategories,
+            requiredScopes,
+            currentTime
+          )
+        : await moiInterface.findValidSession(
+            participantId,
+            agentId,
+            requiredCategories,
+            requiredScopes,
+            currentTime
+          );
 
       if (existingSession) {
         this.logger.info(
@@ -181,14 +190,23 @@ export class SessionsService implements ISessionsService {
     );
 
     try {
-      const result = await this.adapter.validateSession(
-        participantId,
-        sessionId,
-        agentId,
-        requiredCategories,
-        requiredScopes,
-        currentTime
-      );
+      const result = this.useMock
+        ? await mockInterface.mockValidateSession(
+            participantId,
+            sessionId,
+            agentId,
+            requiredCategories,
+            requiredScopes,
+            currentTime
+          )
+        : await moiInterface.validateSession(
+            participantId,
+            sessionId,
+            agentId,
+            requiredCategories,
+            requiredScopes,
+            currentTime
+          );
 
       this.logger.info(
         {

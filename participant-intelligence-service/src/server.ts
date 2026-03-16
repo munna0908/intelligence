@@ -1,11 +1,58 @@
 /**
- * Server Entry Point
+ * Express Server Entry Point
  */
 
-import { createApp } from './app.js';
+import express, { type Express } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
 import { getConfig } from './config/index.js';
 import { getLogger } from './logging/index.js';
+import { loggerMiddleware, errorMiddleware, notFoundMiddleware } from './middlewares/index.js';
+import { versionRouter } from './versions/v1/version.router.js';
 
+/**
+ * Create and configure the Express application
+ */
+export function createApp(): Express {
+  const app = express();
+
+  // Security middleware
+  app.use(helmet());
+
+  // CORS configuration
+  app.use(cors({
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }));
+
+  // Body parsing
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  // Request logging
+  app.use(loggerMiddleware);
+
+  // Health check (outside versioned routes)
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'ok', service: 'participant-intelligence-service' });
+  });
+
+  // API routes
+  app.use('/v1', versionRouter);
+
+  // 404 handler
+  app.use(notFoundMiddleware);
+
+  // Error handler
+  app.use(errorMiddleware);
+
+  return app;
+}
+
+/**
+ * Start the server
+ */
 async function main(): Promise<void> {
   const config = getConfig();
   const logger = getLogger();
@@ -18,14 +65,9 @@ async function main(): Promise<void> {
     'Starting Participant Intelligence Service'
   );
 
-  const app = await createApp();
+  const app = createApp();
 
-  try {
-    await app.listen({
-      port: config.server.port,
-      host: config.server.host,
-    });
-
+  const server = app.listen(config.server.port, config.server.host, () => {
     logger.info(
       {
         port: config.server.port,
@@ -45,22 +87,19 @@ async function main(): Promise<void> {
     logger.info('  POST /v1/writes/prepare');
     logger.info('  POST /v1/writes/submit');
     logger.info('  GET  /v1/writes/status/:txHash');
-  } catch (error) {
-    logger.error({ error }, 'Failed to start server');
-    process.exit(1);
-  }
+  });
 
   // Graceful shutdown
-  const shutdown = async (signal: string) => {
+  const shutdown = (signal: string) => {
     logger.info({ signal }, 'Received shutdown signal');
-    try {
-      await app.close();
+    server.close((err) => {
+      if (err) {
+        logger.error({ error: err }, 'Error during shutdown');
+        process.exit(1);
+      }
       logger.info('Server closed gracefully');
       process.exit(0);
-    } catch (error) {
-      logger.error({ error }, 'Error during shutdown');
-      process.exit(1);
-    }
+    });
   };
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));

@@ -1,22 +1,29 @@
 /**
- * Mock MOI SDK Adapter Tests
+ * Mock MOI Interface Tests
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MockMoiSdkAdapter, mockStore } from '../../src/adapters/moi-sdk/mock.js';
+import {
+  mockStore,
+  mockGetIntelligenceObject,
+  mockGetCategoryRefs,
+  mockGetSession,
+  mockFindValidSession,
+  mockValidateSession,
+  mockPrepareContractWrite,
+  mockSubmitSignedWrite,
+  mockGetTransactionStatus,
+} from '../../src/moi/interface/mock.interface.js';
 import { getCurrentTimestamp } from '../../src/utils/index.js';
 
-describe('MockMoiSdkAdapter', () => {
-  let adapter: MockMoiSdkAdapter;
-
+describe('Mock MOI Interface', () => {
   beforeEach(() => {
     mockStore.reset();
-    adapter = new MockMoiSdkAdapter();
   });
 
-  describe('getIntelligenceObject', () => {
+  describe('mockGetIntelligenceObject', () => {
     it('should return intelligence object for existing participant', async () => {
-      const result = await adapter.getIntelligenceObject('participant_001');
+      const result = await mockGetIntelligenceObject('participant_001');
 
       expect(result).not.toBeNull();
       expect(result?.participantId).toBe('participant_001');
@@ -26,14 +33,14 @@ describe('MockMoiSdkAdapter', () => {
     });
 
     it('should return null for non-existent participant', async () => {
-      const result = await adapter.getIntelligenceObject('non_existent');
+      const result = await mockGetIntelligenceObject('non_existent');
       expect(result).toBeNull();
     });
   });
 
-  describe('getCategoryRefs', () => {
+  describe('mockGetCategoryRefs', () => {
     it('should return requested category refs', async () => {
-      const result = await adapter.getCategoryRefs('participant_001', ['FOOD', 'HEALTH']);
+      const result = await mockGetCategoryRefs('participant_001', ['FOOD', 'HEALTH']);
 
       expect(result.FOOD).toBeDefined();
       expect(result.FOOD?.ref).toBe('bafy_food_cid_001');
@@ -41,20 +48,20 @@ describe('MockMoiSdkAdapter', () => {
     });
 
     it('should return empty for non-existent categories', async () => {
-      const result = await adapter.getCategoryRefs('participant_001', ['ADDRESS', 'PAYMENT']);
+      const result = await mockGetCategoryRefs('participant_001', ['ADDRESS', 'PAYMENT']);
       expect(result.ADDRESS).toBeUndefined();
       expect(result.PAYMENT).toBeUndefined();
     });
 
     it('should return empty for non-existent participant', async () => {
-      const result = await adapter.getCategoryRefs('non_existent', ['FOOD']);
+      const result = await mockGetCategoryRefs('non_existent', ['FOOD']);
       expect(Object.keys(result).length).toBe(0);
     });
   });
 
-  describe('getSession', () => {
+  describe('mockGetSession', () => {
     it('should return session for existing session', async () => {
-      const result = await adapter.getSession('participant_001', 'sess_existing_001');
+      const result = await mockGetSession('participant_001', 'sess_existing_001');
 
       expect(result).not.toBeNull();
       expect(result?.sessionId).toBe('sess_existing_001');
@@ -63,15 +70,15 @@ describe('MockMoiSdkAdapter', () => {
     });
 
     it('should return null for non-existent session', async () => {
-      const result = await adapter.getSession('participant_001', 'non_existent');
+      const result = await mockGetSession('participant_001', 'non_existent');
       expect(result).toBeNull();
     });
   });
 
-  describe('findValidSession', () => {
+  describe('mockFindValidSession', () => {
     it('should find valid session matching requirements', async () => {
       const currentTime = getCurrentTimestamp();
-      const result = await adapter.findValidSession(
+      const result = await mockFindValidSession(
         'participant_001',
         'openclaw_whatsapp_bot',
         ['FOOD'],
@@ -85,7 +92,7 @@ describe('MockMoiSdkAdapter', () => {
 
     it('should not find session with wrong agent', async () => {
       const currentTime = getCurrentTimestamp();
-      const result = await adapter.findValidSession(
+      const result = await mockFindValidSession(
         'participant_001',
         'different_agent',
         ['FOOD'],
@@ -98,7 +105,7 @@ describe('MockMoiSdkAdapter', () => {
 
     it('should not find session missing required category', async () => {
       const currentTime = getCurrentTimestamp();
-      const result = await adapter.findValidSession(
+      const result = await mockFindValidSession(
         'participant_001',
         'openclaw_whatsapp_bot',
         ['FOOD', 'PAYMENT'], // PAYMENT not in existing session
@@ -110,10 +117,10 @@ describe('MockMoiSdkAdapter', () => {
     });
   });
 
-  describe('validateSession', () => {
+  describe('mockValidateSession', () => {
     it('should validate existing active session', async () => {
       const currentTime = getCurrentTimestamp();
-      const result = await adapter.validateSession(
+      const result = await mockValidateSession(
         'participant_001',
         'sess_existing_001',
         'openclaw_whatsapp_bot',
@@ -127,7 +134,7 @@ describe('MockMoiSdkAdapter', () => {
     });
 
     it('should return not_found for non-existent session', async () => {
-      const result = await adapter.validateSession(
+      const result = await mockValidateSession(
         'participant_001',
         'non_existent',
         'openclaw_whatsapp_bot',
@@ -141,7 +148,7 @@ describe('MockMoiSdkAdapter', () => {
     });
 
     it('should return agent_mismatch for wrong agent', async () => {
-      const result = await adapter.validateSession(
+      const result = await mockValidateSession(
         'participant_001',
         'sess_existing_001',
         'wrong_agent',
@@ -155,7 +162,7 @@ describe('MockMoiSdkAdapter', () => {
     });
 
     it('should return missing_category for unauthorized category', async () => {
-      const result = await adapter.validateSession(
+      const result = await mockValidateSession(
         'participant_001',
         'sess_existing_001',
         'openclaw_whatsapp_bot',
@@ -169,7 +176,7 @@ describe('MockMoiSdkAdapter', () => {
     });
 
     it('should return missing_scope for unauthorized scope', async () => {
-      const result = await adapter.validateSession(
+      const result = await mockValidateSession(
         'participant_001',
         'sess_existing_001',
         'openclaw_whatsapp_bot',
@@ -183,9 +190,9 @@ describe('MockMoiSdkAdapter', () => {
     });
   });
 
-  describe('prepareContractWrite', () => {
+  describe('mockPrepareContractWrite', () => {
     it('should prepare update_category_ref write', async () => {
-      const result = await adapter.prepareContractWrite(
+      const result = await mockPrepareContractWrite(
         'update_category_ref',
         {
           category: 'FOOD',
@@ -203,7 +210,7 @@ describe('MockMoiSdkAdapter', () => {
     });
 
     it('should prepare create_session_request write', async () => {
-      const result = await adapter.prepareContractWrite(
+      const result = await mockPrepareContractWrite(
         'create_session_request',
         {
           agentId: 'test_agent',
@@ -221,10 +228,10 @@ describe('MockMoiSdkAdapter', () => {
     });
   });
 
-  describe('submitSignedWrite', () => {
+  describe('mockSubmitSignedWrite', () => {
     it('should submit valid signed write', async () => {
       // First prepare
-      const prepared = await adapter.prepareContractWrite(
+      const prepared = await mockPrepareContractWrite(
         'update_category_ref',
         {
           category: 'FOOD',
@@ -236,7 +243,7 @@ describe('MockMoiSdkAdapter', () => {
       );
 
       // Then submit
-      const result = await adapter.submitSignedWrite(
+      const result = await mockSubmitSignedWrite(
         prepared.payload,
         '0x1234567890abcdef'
       );
@@ -246,7 +253,7 @@ describe('MockMoiSdkAdapter', () => {
     });
 
     it('should reject invalid signature', async () => {
-      const prepared = await adapter.prepareContractWrite(
+      const prepared = await mockPrepareContractWrite(
         'update_category_ref',
         {
           category: 'FOOD',
@@ -257,14 +264,14 @@ describe('MockMoiSdkAdapter', () => {
         'participant_001'
       );
 
-      const result = await adapter.submitSignedWrite(prepared.payload, '');
+      const result = await mockSubmitSignedWrite(prepared.payload, '');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Invalid signature');
     });
 
     it('should apply state change after submit', async () => {
-      const prepared = await adapter.prepareContractWrite(
+      const prepared = await mockPrepareContractWrite(
         'update_category_ref',
         {
           category: 'PAYMENT',
@@ -275,23 +282,23 @@ describe('MockMoiSdkAdapter', () => {
         'participant_001'
       );
 
-      await adapter.submitSignedWrite(prepared.payload, '0x1234567890abcdef');
+      await mockSubmitSignedWrite(prepared.payload, '0x1234567890abcdef');
 
       // Verify state was updated
-      const refs = await adapter.getCategoryRefs('participant_001', ['PAYMENT']);
+      const refs = await mockGetCategoryRefs('participant_001', ['PAYMENT']);
       expect(refs.PAYMENT?.ref).toBe('bafy_payment_new');
       expect(refs.PAYMENT?.schemaVersion).toBe('2.0');
     });
   });
 
-  describe('getTransactionStatus', () => {
+  describe('mockGetTransactionStatus', () => {
     it('should return pending for unknown transaction', async () => {
-      const status = await adapter.getTransactionStatus('0xunknown');
+      const status = await mockGetTransactionStatus('0xunknown');
       expect(status).toBe('pending');
     });
 
     it('should track submitted transaction status', async () => {
-      const prepared = await adapter.prepareContractWrite(
+      const prepared = await mockPrepareContractWrite(
         'update_category_ref',
         {
           category: 'FOOD',
@@ -302,14 +309,14 @@ describe('MockMoiSdkAdapter', () => {
         'participant_001'
       );
 
-      const submitResult = await adapter.submitSignedWrite(
+      const submitResult = await mockSubmitSignedWrite(
         prepared.payload,
         '0x1234567890abcdef'
       );
 
       if (submitResult.txHash) {
         // Initially pending
-        const status = await adapter.getTransactionStatus(submitResult.txHash);
+        const status = await mockGetTransactionStatus(submitResult.txHash);
         expect(status).toBe('pending');
       }
     });

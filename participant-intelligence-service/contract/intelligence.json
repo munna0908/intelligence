@@ -3,7 +3,7 @@
   "engine": {
     "kind": "PISA",
     "flags": [],
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "kind": "logic",
   "elements": [
@@ -516,7 +516,7 @@
       "kind": "callable",
       "data": {
         "name": "IsValidCategory",
-        "mode": "static",
+        "mode": "pure",
         "kind": "internal",
         "accepts": [
           {
@@ -591,7 +591,7 @@
       "kind": "callable",
       "data": {
         "name": "ContainsString",
-        "mode": "static",
+        "mode": "pure",
         "kind": "internal",
         "accepts": [
           {
@@ -653,7 +653,7 @@
       "kind": "callable",
       "data": {
         "name": "IsSubset",
-        "mode": "static",
+        "mode": "pure",
         "kind": "internal",
         "accepts": [
           {

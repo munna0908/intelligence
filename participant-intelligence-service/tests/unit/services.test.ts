@@ -3,20 +3,18 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { IntelligenceService } from '../../src/services/intelligence/index.js';
-import { SessionsService } from '../../src/services/sessions/index.js';
-import { WritesService } from '../../src/services/writes/index.js';
-import { MockMoiSdkAdapter, mockStore } from '../../src/adapters/moi-sdk/mock.js';
+import { IntelligenceService } from '../../src/services/intelligence.service.js';
+import { SessionsService } from '../../src/services/sessions.service.js';
+import { WritesService } from '../../src/services/writes.service.js';
+import { mockStore } from '../../src/moi/interface/mock.interface.js';
 import { getCurrentTimestamp } from '../../src/utils/index.js';
 
 describe('IntelligenceService', () => {
   let service: IntelligenceService;
-  let adapter: MockMoiSdkAdapter;
 
   beforeEach(() => {
     mockStore.reset();
-    adapter = new MockMoiSdkAdapter();
-    service = new IntelligenceService(adapter);
+    service = new IntelligenceService();
   });
 
   describe('getIntelligenceObject', () => {
@@ -46,12 +44,10 @@ describe('IntelligenceService', () => {
 
 describe('SessionsService', () => {
   let service: SessionsService;
-  let adapter: MockMoiSdkAdapter;
 
   beforeEach(() => {
     mockStore.reset();
-    adapter = new MockMoiSdkAdapter();
-    service = new SessionsService(adapter);
+    service = new SessionsService();
   });
 
   describe('getSession', () => {
@@ -139,12 +135,10 @@ describe('SessionsService', () => {
 
 describe('WritesService', () => {
   let service: WritesService;
-  let adapter: MockMoiSdkAdapter;
 
   beforeEach(() => {
     mockStore.reset();
-    adapter = new MockMoiSdkAdapter();
-    service = new WritesService(adapter);
+    service = new WritesService();
   });
 
   describe('prepareWrite', () => {
