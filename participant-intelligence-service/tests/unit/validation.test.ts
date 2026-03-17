@@ -184,6 +184,11 @@ describe('Validation Schemas', () => {
           nonce: 'nonce_001',
         },
         signature: '0xsignedpayload123',
+        ixArgs: '0x1234567890abcdef',
+        sender: {
+          id: 'participant_001',
+          keyId: 0,
+        },
       });
       expect(result.success).toBe(true);
     });

@@ -23,6 +23,8 @@ export interface Config {
     networkId: string;
     useMockAdapter: boolean;
     intelligenceLogicId: string;
+    /** Only used by deployment scripts, not by the service (service has no wallet) */
+    mnemonic?: string;
   };
   logging: {
     level: string;
@@ -67,10 +69,11 @@ export function loadConfig(): Config {
       nodeEnv: getEnvString('NODE_ENV', 'local') as Config['server']['nodeEnv'],
     },
     moi: {
-      networkUrl: getEnvString('MOI_NETWORK_URL', 'https://dev.voyage-rpc.moi.technology/devnet/v2'),
+      networkUrl: getEnvString('MOI_NETWORK_URL', 'https://dev.voyage-rpc.moi.technology/devnet'),
       networkId: getEnvString('MOI_NETWORK_ID', 'devnet'),
       useMockAdapter: getEnvBoolean('USE_MOCK_ADAPTER', true),
       intelligenceLogicId: getEnvString('MOI_INTELLIGENCE_LOGIC_ID', ''),
+      mnemonic: getEnvString('MOI_MNEMONIC', ''),
     },
     logging: {
       level: getEnvString('LOG_LEVEL', 'info'),

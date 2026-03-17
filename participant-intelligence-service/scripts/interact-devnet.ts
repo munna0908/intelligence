@@ -119,14 +119,16 @@ async function listCategories(ctx: Context, actorId: string): Promise<void> {
 
 async function getObject(ctx: Context, actorId: string): Promise<void> {
   console.log(`Getting intelligence object for ${actorId}...`);
+  // Pass hex string directly - SDK converts to bytes internally
   const result = await ctx.driver.routines.GetIntelligenceObject(actorId);
   console.log('Result:', JSON.stringify(result, (_, v) => typeof v === 'bigint' ? v.toString() : v, 2));
 }
 
 async function getVersion(ctx: Context, actorId: string): Promise<void> {
   console.log(`Getting version for ${actorId}...`);
+  // Pass hex string directly - SDK converts to bytes internally
   const result = await ctx.driver.routines.GetVersion(actorId);
-  console.log('Version:', result.toString());
+  console.log('Version:', JSON.stringify(result, (_, v) => typeof v === 'bigint' ? v.toString() : v, 2));
 }
 
 async function createSession(

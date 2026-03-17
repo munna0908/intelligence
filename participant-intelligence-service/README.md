@@ -22,12 +22,19 @@ The participant has an on-chain Participant Intelligence Engine object that stor
 │  - UI/Wallet    │     │                                 │     │                 │
 │  - Session Mgmt │     │  - Session Management           │     │  - Contract     │
 └─────────────────┘     │  - Access Validation            │     │    State        │
-                        │  - Write Preparation            │     │  - Transactions │
-┌─────────────────┐     │  - Transaction Submission       │     └─────────────────┘
-│Inference Service│────▶│                                 │
-│                 │     │  Prepare → Sign → Submit        │
-│  - LLM Calls    │     │                                 │
-│  - Context Fetch│     └─────────────────────────────────┘
+        │               │  - Write Preparation (payload)  │     │  - Transactions │
+        │               │  - Transaction Relay            │     └─────────────────┘
+┌───────▼───────┐       │                                 │
+│  User Wallet  │       │  NOTE: Server NEVER signs       │
+│               │       │  - Prepares payload data        │
+│  - Builds tx  │       │  - Relays wallet-signed tx      │
+│  - Signs      │       └─────────────────────────────────┘
+└───────────────┘
+
+┌─────────────────┐
+│Inference Service│────▶  (uses session validation APIs)
+│  - LLM Calls    │
+│  - Context Fetch│
 └─────────────────┘
 ```
 
@@ -210,7 +217,7 @@ Used by OpenClaw to create or reuse a session.
 
 #### POST /v1/writes/prepare
 
-Prepares a signable transaction for participant state mutation.
+Prepares payload data for a contract write. The server does NOT build the interaction object (ixArgs) - this is done by the user's wallet.
 
 **Supported actions:**
 - `update_category_ref`
@@ -224,6 +231,7 @@ Prepares a signable transaction for participant state mutation.
 {
   "requestId": "req_123",
   "participantId": "participant_001",
+  "keyId": 0,
   "action": "update_category_ref",
   "params": {
     "category": "FOOD",
@@ -241,18 +249,36 @@ Prepares a signable transaction for participant state mutation.
   "status": "ready_to_sign",
   "action": "update_category_ref",
   "summary": "Approve update of FOOD category reference",
-  "contract": "ParticipantIntelligenceEngine",
+  "contract": "0x0800007d...",
   "method": "SetCategoryRef",
-  "args": {...},
-  "payload": {...},
-  "signingDigest": "0xabc123",
-  "expiresAt": 1773162800
+  "args": {
+    "category": "FOOD",
+    "ref": "bafy_new_food_cid",
+    "schemaVersion": "1.0",
+    "updatedAt": 1773162200
+  },
+  "payload": {
+    "contract": "ParticipantIntelligenceEngine",
+    "method": "SetCategoryRef",
+    "args": {...},
+    "participantId": "participant_001",
+    "nonce": "abc123"
+  },
+  "signingDigest": "0xabc123...",
+  "expiresAt": 1773162800,
+  "sender": {
+    "id": "participant_001",
+    "keyId": 0,
+    "sequence": 5
+  }
 }
 ```
 
+**Note:** The response does NOT include `ixArgs`. The wallet uses the payload data to build the POLO-encoded interaction object (`ixArgs`) which it then signs.
+
 #### POST /v1/writes/submit
 
-Submits a signed transaction to the MOI network.
+Submits a wallet-signed transaction to the MOI network. The server does NOT sign anything - it only relays the wallet's signed interaction.
 
 **Request:**
 ```json
@@ -261,9 +287,18 @@ Submits a signed transaction to the MOI network.
   "participantId": "participant_001",
   "action": "update_category_ref",
   "payload": {...},
-  "signature": "0xsignedpayload"
+  "ixArgs": "0x...",
+  "signature": "0x...",
+  "sender": {
+    "id": "participant_001",
+    "keyId": 0
+  }
 }
 ```
+
+- `ixArgs`: POLO-encoded interaction object (built by wallet)
+- `signature`: Wallet's signature of ixArgs
+- `sender`: Sender info (from wallet)
 
 **Response:**
 ```json
@@ -289,23 +324,30 @@ Returns transaction status.
 
 ## Prepare → Sign → Submit Flow
 
-The service enforces a strict signing flow for all state mutations:
+The service enforces a strict user-signing flow for all state mutations. **The server NEVER signs transactions** - it only prepares payload data and relays wallet-signed interactions.
 
 ```
 1. Client calls POST /v1/writes/prepare
-   └─▶ Service returns payload + signingDigest
+   └─▶ Service returns payload data (contract, method, args, sender info)
 
-2. Client signs the signingDigest externally (wallet/signer)
-   └─▶ User approves in wallet UI
+2. OpenClaw creates a wallet deep link from payload
+   └─▶ User clicks link to open wallet
 
-3. Client calls POST /v1/writes/submit with signature
-   └─▶ Service submits to MOI network via SDK
+3. Wallet builds ixArgs (POLO-encoded interaction object)
+   └─▶ Wallet prompts user to sign
+   └─▶ Wallet returns ixArgs + signature to client
 
-4. Client polls GET /v1/writes/status/:txHash
+4. Client calls POST /v1/writes/submit with ixArgs + signature
+   └─▶ Service relays the signed interaction to MOI network
+
+5. Client polls GET /v1/writes/status/:txHash
    └─▶ Until status is "confirmed" or "failed"
 ```
 
-This ensures no unauthorized state changes can occur.
+**Key security guarantees:**
+- Server has no wallet/mnemonic - cannot sign on behalf of users
+- All signatures come from user's wallet
+- Server only relays what the wallet provides
 
 ## Session Validation Rules
 

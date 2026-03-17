@@ -67,10 +67,10 @@ export class WritesService implements IWritesService {
    * builds canonical payload, and computes signing digest.
    */
   async prepareWrite(request: PrepareWriteRequest): Promise<PrepareWriteResponse> {
-    const { requestId, participantId, action, params } = request;
+    const { requestId, participantId, keyId = 0, action, params } = request;
 
     this.logger.info(
-      { requestId, participantId, action },
+      { requestId, participantId, keyId, action },
       'Preparing write request'
     );
 
@@ -80,14 +80,17 @@ export class WritesService implements IWritesService {
       const validatedParams = paramsSchema.parse(params);
 
       // Prepare the contract write via interface
+      // keyId is provided by the user (which key they'll sign with)
       const prepared = this.useMock
-        ? await mockInterface.mockPrepareContractWrite(action, validatedParams, participantId)
-        : await moiInterface.prepareContractWrite(action, validatedParams, participantId);
+        ? await mockInterface.mockPrepareContractWrite(action, validatedParams, participantId, keyId)
+        : await moiInterface.prepareContractWrite(action, validatedParams, participantId, keyId);
 
       // Generate human-readable summary
       const summaryGenerator = ACTION_SUMMARIES[action];
       const summary = summaryGenerator(validatedParams);
 
+      // Note: The wallet builds ixArgs from this payload data
+      // The server does NOT return ixArgs - the wallet generates it
       const response: PrepareWriteResponse = {
         requestId,
         status: 'ready_to_sign',
@@ -99,6 +102,7 @@ export class WritesService implements IWritesService {
         payload: prepared.payload,
         signingDigest: prepared.signingDigest,
         expiresAt: prepared.expiresAt,
+        sender: prepared.sender,
       };
 
       this.logger.info(
@@ -123,10 +127,12 @@ export class WritesService implements IWritesService {
   }
 
   /**
-   * Submit a signed write to the MOI network
+   * Submit a user-signed write to the MOI network
+   *
+   * The server NEVER signs transactions - it only relays user-signed interactions.
    */
   async submitWrite(request: SubmitWriteRequest): Promise<SubmitWriteResponse> {
-    const { requestId, participantId, action, payload, signature } = request;
+    const { requestId, participantId, action, payload, signature, ixArgs, sender } = request;
 
     this.logger.info(
       {
@@ -137,13 +143,13 @@ export class WritesService implements IWritesService {
         method: payload.method,
         signaturePrefix: signature.slice(0, 10) + '...',
       },
-      'Submitting signed write'
+      'Relaying user-signed write'
     );
 
     try {
       const result = this.useMock
         ? await mockInterface.mockSubmitSignedWrite(payload, signature)
-        : await moiInterface.submitSignedWrite(payload, signature);
+        : await moiInterface.submitSignedWrite(ixArgs, signature, sender);
 
       if (!result.success) {
         this.logger.warn(

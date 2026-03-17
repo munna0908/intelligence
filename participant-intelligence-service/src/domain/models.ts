@@ -124,31 +124,55 @@ export type EnsureSessionResponse =
 export interface PrepareWriteRequest {
   requestId: string;
   participantId: string;
+  /** The key ID the user will use for signing (default: 0) */
+  keyId?: number;
   action: WriteAction;
   params: Record<string, unknown>;
 }
 
 // Prepare write response
+// Note: The wallet builds ixArgs from this payload data - the server does NOT build ixArgs
 export interface PrepareWriteResponse {
   requestId: string;
   status: 'ready_to_sign';
   action: WriteAction;
   summary: string;
+  /** Logic contract ID */
   contract: string;
+  /** Method name to call */
   method: string;
+  /** Method arguments */
   args: Record<string, unknown>;
+  /** Full payload for reference */
   payload: WritePayload;
+  /** Human-readable digest for display */
   signingDigest: string;
+  /** When this prepared write expires */
   expiresAt: number;
+  /** Sender info - wallet uses this to build the interaction */
+  sender: {
+    id: string;
+    keyId: number;
+    sequence: number;
+  };
 }
 
 // Submit write request
+// Note: The wallet builds ixArgs and signs it - the server only relays to network
 export interface SubmitWriteRequest {
   requestId: string;
   participantId: string;
   action: WriteAction;
   payload: WritePayload;
+  /** The wallet's signature of ixArgs */
   signature: string;
+  /** The POLO-serialized interaction object as hex (built by wallet) */
+  ixArgs: string;
+  /** Sender info (from wallet) */
+  sender: {
+    id: string;
+    keyId: number;
+  };
 }
 
 // Submit write response

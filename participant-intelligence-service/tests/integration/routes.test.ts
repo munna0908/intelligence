@@ -184,6 +184,11 @@ describe('API Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('ready_to_sign');
       expect(response.body.signingDigest).toMatch(/^0x/);
+      // Note: ixArgs is NOT returned - the wallet builds it from payload
+      expect(response.body.contract).toBeDefined();
+      expect(response.body.method).toBe('SetCategoryRef');
+      expect(response.body.sender).toBeDefined();
+      expect(response.body.sender.id).toBe('participant_001');
     });
   });
 
@@ -206,7 +211,11 @@ describe('API Routes', () => {
 
       const prepared = prepareResponse.body;
 
-      // Then submit
+      // The wallet builds ixArgs from the payload
+      // For testing, we create mock ixArgs as hex-encoded payload
+      const mockIxArgs = '0x' + Buffer.from(JSON.stringify(prepared.payload)).toString('hex');
+
+      // Then submit with wallet-built ixArgs and signature
       const response = await request(app)
         .post('/v1/writes/submit')
         .send({
@@ -215,6 +224,11 @@ describe('API Routes', () => {
           action: 'update_category_ref',
           payload: prepared.payload,
           signature: '0x1234567890abcdef',
+          ixArgs: mockIxArgs,
+          sender: {
+            id: prepared.sender.id,
+            keyId: prepared.sender.keyId,
+          },
         });
 
       expect(response.status).toBe(200);
