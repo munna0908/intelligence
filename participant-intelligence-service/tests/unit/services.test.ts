@@ -98,6 +98,8 @@ describe('SessionsService', () => {
         expect(result.sessionId).toMatch(/^sess_/);
         expect(result.message).toContain('ADDRESS');
         expect(result.writeRequest.action).toBe('create_session_request');
+        expect(result.writeRequest.ixObject).toBeDefined();
+        expect(result.writeRequest.ixObject.ix_operations).toHaveLength(1);
       }
     });
   });
@@ -142,7 +144,7 @@ describe('WritesService', () => {
   });
 
   describe('prepareWrite', () => {
-    it('should prepare update_category_ref write', async () => {
+    it('should prepare update_category_ref write and return ixObject', async () => {
       const result = await service.prepareWrite({
         requestId: 'req_test',
         participantId: 'participant_001',
@@ -158,10 +160,12 @@ describe('WritesService', () => {
       expect(result.requestId).toBe('req_test');
       expect(result.status).toBe('ready_to_sign');
       expect(result.action).toBe('update_category_ref');
-      expect(result.contract).toBe('ParticipantIntelligenceEngine');
       expect(result.method).toBe('SetCategoryRef');
       expect(result.summary).toContain('FOOD');
-      expect(result.signingDigest).toMatch(/^0x/);
+      expect(result.ixObject).toBeDefined();
+      expect(result.ixObject.sender).toBeDefined();
+      expect(result.ixObject.ix_operations).toHaveLength(1);
+      expect(result.expiresAt).toBeGreaterThan(getCurrentTimestamp());
     });
 
     it('should reject invalid params', async () => {
@@ -180,8 +184,8 @@ describe('WritesService', () => {
   });
 
   describe('submitWrite', () => {
-    it('should submit valid write', async () => {
-      // First prepare
+    it('should submit valid signed interaction', async () => {
+      // First prepare to get the ixObject
       const prepared = await service.prepareWrite({
         requestId: 'req_test',
         participantId: 'participant_001',
@@ -194,13 +198,15 @@ describe('WritesService', () => {
         },
       });
 
-      // Then submit
+      // Client would sign prepared.ixObject with their wallet — mock with fake InteractionRequest
       const result = await service.submitWrite({
         requestId: prepared.requestId,
         participantId: 'participant_001',
         action: 'update_category_ref',
-        payload: prepared.payload,
-        signature: '0x1234567890abcdef',
+        signedIx: {
+          ix_args: '0x0123456789abcdef',
+          signatures: '0xabcdef0123456789',
+        },
       });
 
       expect(result.requestId).toBe('req_test');

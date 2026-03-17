@@ -23,8 +23,8 @@ export interface Config {
     networkId: string;
     useMockAdapter: boolean;
     intelligenceLogicId: string;
-    /** Only used by deployment scripts, not by the service (service has no wallet) */
-    mnemonic?: string;
+    mnemonic: string;
+    derivationPath: string;
   };
   logging: {
     level: string;
@@ -74,6 +74,7 @@ export function loadConfig(): Config {
       useMockAdapter: getEnvBoolean('USE_MOCK_ADAPTER', true),
       intelligenceLogicId: getEnvString('MOI_INTELLIGENCE_LOGIC_ID', ''),
       mnemonic: getEnvString('MOI_MNEMONIC', ''),
+      derivationPath: getEnvString('MOI_DERIVATION_PATH', ''),
     },
     logging: {
       level: getEnvString('LOG_LEVEL', 'info'),

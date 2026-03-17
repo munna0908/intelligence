@@ -66,8 +66,6 @@ export async function submitWrite(
         requestId: body.requestId,
         participantId: body.participantId,
         action: body.action,
-        contract: body.payload.contract,
-        method: body.payload.method,
       },
       'POST writes/submit'
     );

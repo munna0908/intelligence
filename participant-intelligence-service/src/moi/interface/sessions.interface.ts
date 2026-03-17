@@ -2,38 +2,14 @@
  * Sessions MOI Interface
  *
  * Handles MOI network interactions for session operations.
- */
+d */
 
-// Note: Pass hex strings directly to routines, not Identifier objects
 import { getLogicDriver } from '../config/provider.config.js';
 import type { Session } from '../../domain/models.js';
 import type { Category, SessionStatus, ValidationFailureReason } from '../../domain/types.js';
 import { isSubset } from '../../utils/crypto.utils.js';
 import { getLogger } from '../../logging/index.js';
 import { getIntelligenceObject } from './intelligence.interface.js';
-
-/**
- * Contract response types
- */
-interface ContractSessionRecord {
-  SessionId: string;
-  AgentId: string;
-  Status: string;
-  Purpose: string;
-  ApprovedCategories: string[];
-  ApprovedScopes: string[];
-  IssuedAt: bigint | number;
-  ExpiresAt: bigint | number;
-  RemainingUses: bigint | number;
-  ApprovalRef: string;
-  RevocationReason: string;
-  Exists: boolean;
-}
-
-interface ContractValidationResult {
-  Valid: boolean;
-  Reason: string;
-}
 
 /**
  * Session validation result
@@ -44,30 +20,75 @@ export interface SessionValidationResult {
 }
 
 /**
- * Convert bigint to number safely
+ * Read a full SessionRecord from actor state storage via ephemeralState.
+ * Returns null if the session does not exist.
+ *
+ * NOTE: ApprovedCategories and ApprovedScopes are []String fields. If the SDK
+ * cannot read them via ephemeralState, they will default to empty arrays.
  */
-function toNumber(value: bigint | number): number {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
-  return value;
-}
+async function readSessionFromState(
+  driver: Awaited<ReturnType<typeof getLogicDriver>>,
+  participantId: string,
+  sessionId: string
+): Promise<Session | null> {
+  try {
+    const exists = await driver.ephemeralState.get<boolean>(participantId, (b: any) => {
+      b.entity('sessions').property(sessionId).field('Exists');
+    });
+    if (!exists) return null;
 
-/**
- * Map contract SessionRecord to domain model
- */
-function mapSession(record: ContractSessionRecord): Session {
-  return {
-    sessionId: record.SessionId,
-    agentId: record.AgentId,
-    status: record.Status as SessionStatus,
-    purpose: record.Purpose,
-    approvedCategories: record.ApprovedCategories as Category[],
-    approvedScopes: record.ApprovedScopes,
-    expiresAt: toNumber(record.ExpiresAt),
-    remainingUses: toNumber(record.RemainingUses),
-    createdAt: toNumber(record.IssuedAt),
-  };
+    const [agentId, status, purpose, issuedAt, expiresAt, remainingUses] = await Promise.all([
+      driver.ephemeralState.get<string>(participantId, (b: any) => {
+        b.entity('sessions').property(sessionId).field('AgentId');
+      }),
+      driver.ephemeralState.get<string>(participantId, (b: any) => {
+        b.entity('sessions').property(sessionId).field('Status');
+      }),
+      driver.ephemeralState.get<string>(participantId, (b: any) => {
+        b.entity('sessions').property(sessionId).field('Purpose');
+      }),
+      driver.ephemeralState.get<bigint>(participantId, (b: any) => {
+        b.entity('sessions').property(sessionId).field('IssuedAt');
+      }),
+      driver.ephemeralState.get<bigint>(participantId, (b: any) => {
+        b.entity('sessions').property(sessionId).field('ExpiresAt');
+      }),
+      driver.ephemeralState.get<bigint>(participantId, (b: any) => {
+        b.entity('sessions').property(sessionId).field('RemainingUses');
+      }),
+    ]);
+
+    // Array fields — attempt to read; fall back to empty if unsupported
+    let approvedCategories: Category[] = [];
+    let approvedScopes: string[] = [];
+    try {
+      const cats = await driver.ephemeralState.get<string[]>(participantId, (b: any) => {
+        b.entity('sessions').property(sessionId).field('ApprovedCategories');
+      });
+      if (Array.isArray(cats)) approvedCategories = cats as Category[];
+    } catch { /* not supported */ }
+    try {
+      const scopes = await driver.ephemeralState.get<string[]>(participantId, (b: any) => {
+        b.entity('sessions').property(sessionId).field('ApprovedScopes');
+      });
+      if (Array.isArray(scopes)) approvedScopes = scopes;
+    } catch { /* not supported */ }
+
+    return {
+      sessionId,
+      agentId: agentId ?? '',
+      status: (status ?? 'REQUESTED') as SessionStatus,
+      purpose: purpose ?? '',
+      approvedCategories,
+      approvedScopes,
+      expiresAt: Number(expiresAt ?? 0),
+      remainingUses: Number(remainingUses ?? 0),
+      createdAt: Number(issuedAt ?? 0),
+    };
+  } catch {
+    // Key does not exist in storage
+    return null;
+  }
 }
 
 /**
@@ -82,30 +103,7 @@ export async function getSession(
 
   try {
     const driver = await getLogicDriver();
-
-    const getSessionFn = driver.routines['GetSession'];
-    if (!getSessionFn) {
-      throw new Error('GetSession routine not found');
-    }
-
-    const response = await getSessionFn(participantId, sessionId) as { output: { session: ContractSessionRecord } | null; error: unknown };
-
-    logger.info({ response: JSON.stringify(response, (_, v) => typeof v === 'bigint' ? v.toString() : v) }, 'GetSession raw response');
-
-    // Handle contract errors
-    if (response.error || !response.output) {
-      logger.info({ error: response.error, hasOutput: !!response.output }, 'GetSession returning null - error or no output');
-      return null;
-    }
-
-    const record = response.output.session;
-    if (!record || !record.Exists) {
-      logger.info({ record, exists: record?.Exists }, 'GetSession returning null - no record or not exists');
-      return null;
-    }
-
-    logger.info({ record }, 'GetSession returning session');
-    return mapSession(record);
+    return await readSessionFromState(driver, participantId, sessionId);
   } catch (error) {
     logger.error({ participantId, sessionId, error }, 'Failed to get session');
     throw error;
@@ -163,7 +161,8 @@ export async function findValidSession(
 }
 
 /**
- * Validate a session against requirements using the on-chain validator
+ * Validate a session against requirements.
+ * Reads session from state directly and validates locally (contract static call is broken on devnet).
  */
 export async function validateSession(
   participantId: string,
@@ -181,43 +180,37 @@ export async function validateSession(
 
   try {
     const driver = await getLogicDriver();
+    const session = await readSessionFromState(driver, participantId, sessionId);
 
-    const validateSessionFn = driver.routines['ValidateSession'];
-    if (!validateSessionFn) {
-      throw new Error('ValidateSession routine not found');
-    }
-
-    const response = await validateSessionFn(
-      participantId,
-      sessionId,
-      agentId,
-      requiredCategories,
-      requiredScopes,
-      BigInt(currentTime)
-    ) as { output: ContractValidationResult | null; error: unknown };
-
-    // Handle contract errors
-    if (response.error || !response.output) {
+    if (!session) {
       return { valid: false, reason: 'not_found' };
     }
 
-    const result = response.output;
+    if (session.status !== 'ACTIVE') {
+      return { valid: false, reason: 'wrong_status' };
+    }
 
-    const reasonMap: Record<string, SessionValidationResult['reason']> = {
-      'valid': null,
-      'not_found': 'not_found',
-      'wrong_status': 'wrong_status',
-      'agent_mismatch': 'agent_mismatch',
-      'expired': 'expired',
-      'exhausted': 'exhausted',
-      'missing_category': 'missing_category',
-      'missing_scope': 'missing_scope',
-    };
+    if (session.agentId !== agentId) {
+      return { valid: false, reason: 'agent_mismatch' };
+    }
 
-    return {
-      valid: result.Valid,
-      reason: result.Valid ? null : (reasonMap[result.Reason] ?? 'not_found'),
-    };
+    if (currentTime > session.expiresAt) {
+      return { valid: false, reason: 'expired' };
+    }
+
+    if (session.remainingUses === 0) {
+      return { valid: false, reason: 'exhausted' };
+    }
+
+    if (!isSubset(requiredCategories, session.approvedCategories)) {
+      return { valid: false, reason: 'missing_category' };
+    }
+
+    if (!isSubset(requiredScopes, session.approvedScopes)) {
+      return { valid: false, reason: 'missing_scope' };
+    }
+
+    return { valid: true, reason: null };
   } catch (error) {
     logger.error(
       { participantId, sessionId, agentId, error },

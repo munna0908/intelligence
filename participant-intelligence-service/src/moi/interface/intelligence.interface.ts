@@ -4,8 +4,7 @@
  * Handles MOI network interactions for intelligence object operations.
  */
 
-// Note: Pass hex strings directly to routines, not Identifier objects
-import { getLogicDriver, getProvider } from '../config/provider.config.js';
+import { getLogicDriver } from '../config/provider.config.js';
 import type {
   IntelligenceObjectSummary,
   CategoryRef,

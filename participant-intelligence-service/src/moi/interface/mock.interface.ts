@@ -8,22 +8,22 @@ import type {
   IntelligenceObjectSummary,
   CategoryRef,
   Session,
-  WritePayload,
   TransactionStatus,
+  InteractionObject,
+  InteractionRequest,
 } from '../../domain/models.js';
 import { ACTION_METHOD_MAP } from '../../domain/models.js';
 import type { Category, WriteAction, ValidationFailureReason, SessionStatus } from '../../domain/types.js';
 import {
   generateSessionId,
-  generateNonce,
   generateTxHash,
-  computeSigningDigest,
   getCurrentTimestamp,
   isSubset,
 } from '../../utils/crypto.utils.js';
 import { getConfig } from '../../config/index.js';
 import { getLogger } from '../../logging/index.js';
 import type { PreparedWrite, SubmitWriteResult, SessionValidationResult } from './index.js';
+import { OpType } from 'js-moi-sdk';
 
 interface MockParticipantState {
   participantId: string;
@@ -41,13 +41,21 @@ interface MockTransaction {
   submittedAt: number;
 }
 
+// Internal payload used only for mock state simulation
+interface MockWritePayload {
+  method: string;
+  args: Record<string, unknown>;
+  participantId: string;
+}
+
 /**
  * In-memory store for mock data
  */
 class MockStore {
   private participants: Map<string, MockParticipantState> = new Map();
   private transactions: Map<string, MockTransaction> = new Map();
-  private pendingWrites: Map<string, PreparedWrite> = new Map();
+  // Maps mock tx hash → pending write payload for state simulation
+  private pendingMockWrites: Map<string, MockWritePayload> = new Map();
 
   constructor() {
     this.seedMockData();
@@ -134,22 +142,22 @@ class MockStore {
     }
   }
 
-  getPendingWrite(nonce: string): PreparedWrite | undefined {
-    return this.pendingWrites.get(nonce);
+  getPendingMockWrite(txHash: string): MockWritePayload | undefined {
+    return this.pendingMockWrites.get(txHash);
   }
 
-  addPendingWrite(nonce: string, write: PreparedWrite): void {
-    this.pendingWrites.set(nonce, write);
+  addPendingMockWrite(txHash: string, payload: MockWritePayload): void {
+    this.pendingMockWrites.set(txHash, payload);
   }
 
-  removePendingWrite(nonce: string): void {
-    this.pendingWrites.delete(nonce);
+  removePendingMockWrite(txHash: string): void {
+    this.pendingMockWrites.delete(txHash);
   }
 
   reset(): void {
     this.participants.clear();
     this.transactions.clear();
-    this.pendingWrites.clear();
+    this.pendingMockWrites.clear();
     this.seedMockData();
   }
 }
@@ -321,68 +329,45 @@ export async function mockPrepareContractWrite(
   logger.debug({ action, participantId, keyId }, 'prepareContractWrite');
 
   const mapping = ACTION_METHOD_MAP[action];
-  const nonce = generateNonce();
   const now = getCurrentTimestamp();
+  const mockTxHash = generateTxHash();
 
-  const payload: WritePayload = {
-    contract: mapping.contract,
-    method: mapping.method,
-    args: params,
-    participantId,
-    nonce,
-  };
-
-  const signingDigest = computeSigningDigest(payload);
-  const expiresAt = now + config.writeRequest.ttlSeconds;
-
-  // Note: The wallet builds ixArgs from this payload data
-  // The server does NOT build ixArgs
-  const preparedWrite: PreparedWrite = {
-    contract: mapping.contract,
-    method: mapping.method,
-    args: params,
-    payload,
-    signingDigest,
-    expiresAt,
+  // Build a minimal mock InteractionObject — the client signs this
+  const mockIxObject: InteractionObject = {
     sender: {
-      id: participantId,
-      keyId,
+      id: participantId as `0x${string}`,
       sequence: 0,
+      key_id: 0,
     },
+    fuel_price: 1,
+    fuel_limit: 10000,
+    ix_operations: [
+      {
+        type: OpType.LOGIC_INVOKE,
+        payload: {
+          logic_id: '0x2000000000000000000000000000000000000000000000000000000000000000',
+          callsite: mapping.method,
+        } as any,
+      },
+    ],
+    participants: [],
   };
 
-  mockStore.addPendingWrite(nonce, preparedWrite);
-
-  return preparedWrite;
+  return {
+    method: mapping.method,
+    ixObject: mockIxObject,
+    expiresAt: now + config.writeRequest.ttlSeconds,
+  };
 }
 
 export async function mockSubmitSignedWrite(
-  payload: WritePayload,
-  signature: string
+  signedIx: InteractionRequest
 ): Promise<SubmitWriteResult> {
   const logger = getLogger().child({ interface: 'mock-writes' });
-
-  logger.debug(
-    { contract: payload.contract, method: payload.method, nonce: payload.nonce },
-    'submitSignedWrite'
-  );
-
-  const pendingWrite = mockStore.getPendingWrite(payload.nonce);
-  if (!pendingWrite) {
-    return { success: false, error: 'Invalid or expired write request' };
-  }
-
-  const now = getCurrentTimestamp();
-  if (now > pendingWrite.expiresAt) {
-    mockStore.removePendingWrite(payload.nonce);
-    return { success: false, error: 'Write request has expired' };
-  }
-
-  if (!signature || signature.length < 10) {
-    return { success: false, error: 'Invalid signature' };
-  }
+  logger.debug('mockSubmitSignedWrite');
 
   const txHash = generateTxHash();
+  const now = getCurrentTimestamp();
 
   mockStore.addTransaction({
     txHash,
@@ -390,13 +375,9 @@ export async function mockSubmitSignedWrite(
     submittedAt: now,
   });
 
-  applyStateChange(payload);
-
   setTimeout(() => {
     mockStore.updateTransactionStatus(txHash, 'confirmed');
   }, 100);
-
-  mockStore.removePendingWrite(payload.nonce);
 
   return { success: true, txHash };
 }
@@ -411,94 +392,6 @@ export async function mockGetTransactionStatus(txHash: string): Promise<Transact
   }
 
   return tx.status;
-}
-
-function applyStateChange(payload: WritePayload): void {
-  const participant = mockStore.getParticipant(payload.participantId);
-  const now = getCurrentTimestamp();
-
-  const state: MockParticipantState = participant ?? {
-    participantId: payload.participantId,
-    version: '1.0',
-    categoryRefs: {},
-    sessions: [],
-    metadata: { updatedAt: now },
-  };
-
-  switch (payload.method) {
-    case 'SetCategoryRef': {
-      const args = payload.args as {
-        category: Category;
-        ref: string;
-        schemaVersion: string;
-        updatedAt: number;
-      };
-      state.categoryRefs[args.category] = {
-        ref: args.ref,
-        schemaVersion: args.schemaVersion,
-        updatedAt: args.updatedAt,
-      };
-      state.metadata.updatedAt = now;
-      break;
-    }
-
-    case 'CreateSessionRequest': {
-      const args = payload.args as {
-        agentId: string;
-        purpose: string;
-        requiredCategories: Category[];
-        requiredScopes: string[];
-        requestedUses: number;
-        ttlSeconds: number;
-      };
-      const newSession: Session = {
-        sessionId: generateSessionId(),
-        agentId: args.agentId,
-        status: 'PENDING',
-        purpose: args.purpose,
-        approvedCategories: args.requiredCategories,
-        approvedScopes: args.requiredScopes,
-        expiresAt: now + args.ttlSeconds,
-        remainingUses: args.requestedUses,
-        createdAt: now,
-      };
-      state.sessions.push(newSession);
-      state.metadata.updatedAt = now;
-      break;
-    }
-
-    case 'ApproveSession': {
-      const args = payload.args as { sessionId: string };
-      const session = state.sessions.find((s) => s.sessionId === args.sessionId);
-      if (session) {
-        session.status = 'ACTIVE';
-        state.metadata.updatedAt = now;
-      }
-      break;
-    }
-
-    case 'DenySession': {
-      const args = payload.args as { sessionId: string };
-      const session = state.sessions.find((s) => s.sessionId === args.sessionId);
-      if (session) {
-        session.status = 'DENIED';
-        state.metadata.updatedAt = now;
-      }
-      break;
-    }
-
-    case 'RevokeSession': {
-      const args = payload.args as { sessionId: string };
-      const session = state.sessions.find((s) => s.sessionId === args.sessionId);
-      if (session) {
-        session.status = 'REVOKED';
-        state.metadata.updatedAt = now;
-      }
-      break;
-    }
-  }
-
-  mockStore.setParticipant(payload.participantId, state);
 }
 
 // Export mock store for testing

@@ -6,9 +6,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "NODE_ENV=local tsx watch src/server.ts",
-    "dev:dev": "NODE_ENV=development tsx watch src/server.ts",
-    "dev:prod": "NODE_ENV=production tsx watch src/server.ts",
+    "local": "NODE_ENV=local tsx watch src/server.ts",
+    "start:dev": "NODE_ENV=development tsx watch src/server.ts",
+    "start:prod": "NODE_ENV=production tsx watch src/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -17,7 +17,11 @@
     "deploy:devnet": "tsx scripts/deploy-devnet.ts",
     "verify:devnet": "tsx scripts/verify-deployment.ts",
     "interact:devnet": "tsx scripts/interact-devnet.ts",
-    "test:category-api": "NODE_ENV=local tsx scripts/test-category-api.ts"
+    "test:api": "tsx scripts/test-api.ts",
+    "test:writes": "tsx scripts/test-writes.ts",
+    "test:reads": "tsx scripts/test-reads.ts",
+    "test:scenarios": "tsx scripts/test-scenarios.ts",
+    "test:multi": "tsx scripts/test-multi-participant.ts"
   },
   "keywords": [
     "moi",

@@ -1,19 +1,19 @@
 /**
  * MOI Provider Configuration
  *
- * Initializes and exports the provider and logic driver for MOI network interactions.
- *
- * NOTE: This service does NOT use a server wallet. All transactions are signed by users.
- * The LogicDriver is initialized with just a provider for read-only operations.
+ * Initializes and exports the JsonRpcProvider and LogicDriver singletons.
  */
 
-import { JsonRpcProvider, LogicDriver } from 'js-moi-sdk';
+import { Wallet, JsonRpcProvider, getLogicDriver as getLogicDriverSDK } from 'js-moi-sdk';
+import type { LogicDriver, InteractionReceipt } from 'js-moi-sdk';
 import { getConfig } from '../../config/index.js';
 import { getLogger } from '../../logging/index.js';
 
+export type { LogicDriver, InteractionReceipt };
+
 // Singleton instances
 let providerInstance: JsonRpcProvider | null = null;
-let logicDriverInstance: any = null;
+let logicDriverInstance: LogicDriver | null = null;
 let initPromise: Promise<void> | null = null;
 
 /**
@@ -25,15 +25,15 @@ export async function getProvider(): Promise<JsonRpcProvider> {
 }
 
 /**
- * Get the LogicDriver singleton (read-only, no wallet)
+ * Get the LogicDriver singleton
  */
-export async function getLogicDriver(): Promise<any> {
+export async function getLogicDriver(): Promise<LogicDriver> {
   await ensureInitialized();
-  return logicDriverInstance;
+  return logicDriverInstance!;
 }
 
 /**
- * Initialize provider and logic driver
+ * Initialize provider and logic driver lazily
  */
 async function ensureInitialized(): Promise<void> {
   if (logicDriverInstance) return;
@@ -58,26 +58,26 @@ async function initialize(): Promise<void> {
     );
   }
 
-  logger.info(
-    { networkUrl: config.moi.networkUrl, logicId },
-    'Initializing MOI provider and logic driver (read-only, no wallet)'
-  );
-
-  // Create provider
-  providerInstance = new JsonRpcProvider(config.moi.networkUrl);
-
-  // Fetch manifest directly using provider
-  const manifest = await providerInstance.getLogicManifest(logicId, 'JSON');
-
-  if (typeof manifest !== 'object') {
-    throw new Error('Failed to fetch logic manifest');
+  const mnemonic = config.moi.mnemonic;
+  if (!mnemonic) {
+    throw new Error(
+      'MOI_MNEMONIC is not configured. Set your wallet mnemonic phrase.'
+    );
   }
 
-  // Initialize logic driver with provider only (no wallet)
-  // The LogicDriver.connect() method accepts either Signer or Provider
-  logicDriverInstance = new LogicDriver(logicId, manifest, providerInstance as any);
+  logger.info(
+    { networkUrl: config.moi.networkUrl, logicId },
+    'Initializing MOI provider and logic driver'
+  );
 
-  logger.info({ logicId }, 'MOI provider and logic driver initialized (no wallet)');
+  providerInstance = new JsonRpcProvider(config.moi.networkUrl);
+
+  const wallet = await Wallet.fromMnemonic(mnemonic, config.moi.derivationPath);
+  wallet.connect(providerInstance);
+
+  logicDriverInstance = await getLogicDriverSDK(logicId, wallet);
+
+  logger.info({ logicId }, 'MOI provider and logic driver initialized');
 }
 
 /**

@@ -6,6 +6,7 @@
 
 import * as moiInterface from '../moi/interface/sessions.interface.js';
 import * as mockInterface from '../moi/interface/mock.interface.js';
+import * as writeMoiInterface from '../moi/interface/writes.interface.js';
 import type {
   Session,
   EnsureSessionRequest,
@@ -13,8 +14,7 @@ import type {
   ValidateSessionRequest,
   ValidateSessionResponse,
 } from '../domain/models.js';
-import { ACTION_METHOD_MAP } from '../domain/models.js';
-import { getCurrentTimestamp, generateSessionId, computeSigningDigest, generateNonce } from '../utils/crypto.utils.js';
+import { getCurrentTimestamp, generateSessionId } from '../utils/crypto.utils.js';
 import { getConfig } from '../config/index.js';
 import { getLogger } from '../logging/index.js';
 
@@ -121,8 +121,7 @@ export class SessionsService implements ISessionsService {
       );
 
       const sessionId = generateSessionId();
-      const mapping = ACTION_METHOD_MAP['create_session_request'];
-      const nonce = generateNonce();
+      const categoryList = requiredCategories.join(' and ');
 
       const args = {
         sessionId,
@@ -134,16 +133,9 @@ export class SessionsService implements ISessionsService {
         ttlSeconds,
       };
 
-      const payload = {
-        contract: mapping.contract,
-        method: mapping.method,
-        args,
-        participantId,
-        nonce,
-      };
-
-      const signingDigest = computeSigningDigest(payload);
-      const categoryList = requiredCategories.join(' and ');
+      const prepared = this.useMock
+        ? await mockInterface.mockPrepareContractWrite('create_session_request', args, participantId)
+        : await writeMoiInterface.prepareContractWrite('create_session_request', args, participantId);
 
       return {
         status: 'pending_signature',
@@ -152,8 +144,7 @@ export class SessionsService implements ISessionsService {
         writeRequest: {
           action: 'create_session_request',
           summary: `Approve agent access for ${categoryList}`,
-          payload,
-          signingDigest,
+          ixObject: prepared.ixObject,
         },
       };
     } catch (error) {

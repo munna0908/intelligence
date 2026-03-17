@@ -61,16 +61,16 @@ export class WritesService implements IWritesService {
   }
 
   /**
-   * Prepare a signable write request
+   * Prepare a signable write request.
    *
-   * Validates action and params, maps to contract method,
-   * builds canonical payload, and computes signing digest.
+   * Validates action and params, calls ixData() on the routine to build
+   * the InteractionObject, and returns it to the client for signing.
    */
   async prepareWrite(request: PrepareWriteRequest): Promise<PrepareWriteResponse> {
-    const { requestId, participantId, keyId = 0, action, params } = request;
+    const { requestId, participantId, action, params } = request;
 
     this.logger.info(
-      { requestId, participantId, keyId, action },
+      { requestId, participantId, action },
       'Preparing write request'
     );
 
@@ -80,39 +80,24 @@ export class WritesService implements IWritesService {
       const validatedParams = paramsSchema.parse(params);
 
       // Prepare the contract write via interface
-      // keyId is provided by the user (which key they'll sign with)
       const prepared = this.useMock
-        ? await mockInterface.mockPrepareContractWrite(action, validatedParams, participantId, keyId)
-        : await moiInterface.prepareContractWrite(action, validatedParams, participantId, keyId);
+        ? await mockInterface.mockPrepareContractWrite(action, validatedParams, participantId)
+        : await moiInterface.prepareContractWrite(action, validatedParams, participantId);
 
-      // Generate human-readable summary
-      const summaryGenerator = ACTION_SUMMARIES[action];
-      const summary = summaryGenerator(validatedParams);
+      const summary = ACTION_SUMMARIES[action](validatedParams);
 
-      // Note: The wallet builds ixArgs from this payload data
-      // The server does NOT return ixArgs - the wallet generates it
       const response: PrepareWriteResponse = {
         requestId,
         status: 'ready_to_sign',
         action,
         summary,
-        contract: prepared.contract,
         method: prepared.method,
-        args: prepared.args,
-        payload: prepared.payload,
-        signingDigest: prepared.signingDigest,
+        ixObject: prepared.ixObject,
         expiresAt: prepared.expiresAt,
-        sender: prepared.sender,
       };
 
       this.logger.info(
-        {
-          requestId,
-          participantId,
-          action,
-          method: prepared.method,
-          expiresAt: prepared.expiresAt,
-        },
+        { requestId, participantId, action, method: prepared.method, expiresAt: prepared.expiresAt },
         'Write request prepared'
       );
 
@@ -127,29 +112,23 @@ export class WritesService implements IWritesService {
   }
 
   /**
-   * Submit a user-signed write to the MOI network
+   * Submit a signed interaction to the MOI network.
    *
-   * The server NEVER signs transactions - it only relays user-signed interactions.
+   * The client receives the InteractionObject from prepareWrite, signs it
+   * with their own wallet, and sends back the InteractionRequest here.
    */
   async submitWrite(request: SubmitWriteRequest): Promise<SubmitWriteResponse> {
-    const { requestId, participantId, action, payload, signature, ixArgs, sender } = request;
+    const { requestId, participantId, action, signedIx } = request;
 
     this.logger.info(
-      {
-        requestId,
-        participantId,
-        action,
-        contract: payload.contract,
-        method: payload.method,
-        signaturePrefix: signature.slice(0, 10) + '...',
-      },
-      'Relaying user-signed write'
+      { requestId, participantId, action },
+      'Submitting signed write'
     );
 
     try {
       const result = this.useMock
-        ? await mockInterface.mockSubmitSignedWrite(payload, signature)
-        : await moiInterface.submitSignedWrite(ixArgs, signature, sender);
+        ? await mockInterface.mockSubmitSignedWrite(signedIx)
+        : await moiInterface.submitSignedWrite(signedIx);
 
       if (!result.success) {
         this.logger.warn(

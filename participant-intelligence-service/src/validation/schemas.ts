@@ -56,7 +56,6 @@ export const validateSessionBodySchema = z.object({
 export const prepareWriteBodyBaseSchema = z.object({
   requestId: z.string().min(1, 'requestId is required'),
   participantId: participantIdSchema,
-  keyId: z.number().int().nonnegative('keyId must be a non-negative integer').optional().default(0),
   action: z.enum(WRITE_ACTIONS),
   params: z.record(z.unknown()),
 });
@@ -92,13 +91,10 @@ export const revokeSessionParamsSchema = z.object({
   reason: z.string().optional(),
 });
 
-// Payload schema for submit
-const writePayloadSchema = z.object({
-  contract: z.string().min(1),
-  method: z.string().min(1),
-  args: z.record(z.unknown()),
-  participantId: participantIdSchema,
-  nonce: z.string().min(1),
+// InteractionRequest schema — the signed interaction returned by the client's wallet
+const interactionRequestSchema = z.object({
+  ix_args: z.string().min(1, 'ix_args is required'),
+  signatures: z.string().min(1, 'signatures is required'),
 });
 
 // POST /v1/writes/submit
@@ -106,13 +102,7 @@ export const submitWriteBodySchema = z.object({
   requestId: z.string().min(1, 'requestId is required'),
   participantId: participantIdSchema,
   action: z.enum(WRITE_ACTIONS),
-  payload: writePayloadSchema,
-  signature: z.string().min(1, 'signature is required'),
-  ixArgs: z.string().regex(/^0x[a-fA-F0-9]+$/, 'ixArgs must be a valid hex string'),
-  sender: z.object({
-    id: z.string().min(1, 'sender.id is required'),
-    keyId: z.number().int().nonnegative('sender.keyId must be a non-negative integer'),
-  }),
+  signedIx: interactionRequestSchema,
 });
 
 // GET /v1/writes/status/:txHash
