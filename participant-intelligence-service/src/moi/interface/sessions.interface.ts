@@ -4,6 +4,7 @@
  * Handles MOI network interactions for session operations.
  */
 
+// Note: Pass hex strings directly to routines, not Identifier objects
 import { getLogicDriver } from '../config/provider.config.js';
 import type { Session } from '../../domain/models.js';
 import type { Category, SessionStatus, ValidationFailureReason } from '../../domain/types.js';
@@ -87,12 +88,23 @@ export async function getSession(
       throw new Error('GetSession routine not found');
     }
 
-    const record = await getSessionFn(participantId, sessionId).call() as ContractSessionRecord;
+    const response = await getSessionFn(participantId, sessionId) as { output: { session: ContractSessionRecord } | null; error: unknown };
 
-    if (!record.Exists) {
+    logger.info({ response: JSON.stringify(response, (_, v) => typeof v === 'bigint' ? v.toString() : v) }, 'GetSession raw response');
+
+    // Handle contract errors
+    if (response.error || !response.output) {
+      logger.info({ error: response.error, hasOutput: !!response.output }, 'GetSession returning null - error or no output');
       return null;
     }
 
+    const record = response.output.session;
+    if (!record || !record.Exists) {
+      logger.info({ record, exists: record?.Exists }, 'GetSession returning null - no record or not exists');
+      return null;
+    }
+
+    logger.info({ record }, 'GetSession returning session');
     return mapSession(record);
   } catch (error) {
     logger.error({ participantId, sessionId, error }, 'Failed to get session');
@@ -175,14 +187,21 @@ export async function validateSession(
       throw new Error('ValidateSession routine not found');
     }
 
-    const result = await validateSessionFn(
+    const response = await validateSessionFn(
       participantId,
       sessionId,
       agentId,
       requiredCategories,
       requiredScopes,
       BigInt(currentTime)
-    ).call() as ContractValidationResult;
+    ) as { output: ContractValidationResult | null; error: unknown };
+
+    // Handle contract errors
+    if (response.error || !response.output) {
+      return { valid: false, reason: 'not_found' };
+    }
+
+    const result = response.output;
 
     const reasonMap: Record<string, SessionValidationResult['reason']> = {
       'valid': null,

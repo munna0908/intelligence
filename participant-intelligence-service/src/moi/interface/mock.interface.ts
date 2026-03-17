@@ -312,12 +312,13 @@ export async function mockValidateSession(
 export async function mockPrepareContractWrite(
   action: WriteAction,
   params: Record<string, unknown>,
-  participantId: string
+  participantId: string,
+  keyId: number = 0
 ): Promise<PreparedWrite> {
   const logger = getLogger().child({ interface: 'mock-writes' });
   const config = getConfig();
 
-  logger.debug({ action, participantId }, 'prepareContractWrite');
+  logger.debug({ action, participantId, keyId }, 'prepareContractWrite');
 
   const mapping = ACTION_METHOD_MAP[action];
   const nonce = generateNonce();
@@ -334,6 +335,8 @@ export async function mockPrepareContractWrite(
   const signingDigest = computeSigningDigest(payload);
   const expiresAt = now + config.writeRequest.ttlSeconds;
 
+  // Note: The wallet builds ixArgs from this payload data
+  // The server does NOT build ixArgs
   const preparedWrite: PreparedWrite = {
     contract: mapping.contract,
     method: mapping.method,
@@ -341,6 +344,11 @@ export async function mockPrepareContractWrite(
     payload,
     signingDigest,
     expiresAt,
+    sender: {
+      id: participantId,
+      keyId,
+      sequence: 0,
+    },
   };
 
   mockStore.addPendingWrite(nonce, preparedWrite);

@@ -56,6 +56,7 @@ export const validateSessionBodySchema = z.object({
 export const prepareWriteBodyBaseSchema = z.object({
   requestId: z.string().min(1, 'requestId is required'),
   participantId: participantIdSchema,
+  keyId: z.number().int().nonnegative('keyId must be a non-negative integer').optional().default(0),
   action: z.enum(WRITE_ACTIONS),
   params: z.record(z.unknown()),
 });
@@ -107,6 +108,11 @@ export const submitWriteBodySchema = z.object({
   action: z.enum(WRITE_ACTIONS),
   payload: writePayloadSchema,
   signature: z.string().min(1, 'signature is required'),
+  ixArgs: z.string().regex(/^0x[a-fA-F0-9]+$/, 'ixArgs must be a valid hex string'),
+  sender: z.object({
+    id: z.string().min(1, 'sender.id is required'),
+    keyId: z.number().int().nonnegative('sender.keyId must be a non-negative integer'),
+  }),
 });
 
 // GET /v1/writes/status/:txHash

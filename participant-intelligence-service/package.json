@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "deploy:devnet": "tsx scripts/deploy-devnet.ts",
     "verify:devnet": "tsx scripts/verify-deployment.ts",
-    "interact:devnet": "tsx scripts/interact-devnet.ts"
+    "interact:devnet": "tsx scripts/interact-devnet.ts",
+    "test:category-api": "NODE_ENV=local tsx scripts/test-category-api.ts"
   },
   "keywords": [
     "moi",
@@ -32,7 +33,7 @@
     "dotenv-flow": "^4.1.0",
     "express": "^4.18.2",
     "helmet": "^7.1.0",
-    "js-moi-sdk": "0.7.0-rc10",
+    "js-moi-sdk": "file:../../js-moi-sdk/packages/js-moi",
     "pino": "^9.3.2",
     "zod": "^3.23.8"
   },
@@ -41,6 +42,7 @@
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.12",
     "@types/supertest": "^7.2.0",
+    "patch-package": "^8.0.1",
     "pino-pretty": "^13.1.3",
     "supertest": "^7.2.2",
     "tsx": "^4.16.2",

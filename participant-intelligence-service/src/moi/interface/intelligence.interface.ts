@@ -4,8 +4,8 @@
  * Handles MOI network interactions for intelligence object operations.
  */
 
+// Note: Pass hex strings directly to routines, not Identifier objects
 import { getLogicDriver, getProvider } from '../config/provider.config.js';
-import type { LogicDriver } from '../config/provider.config.js';
 import type {
   IntelligenceObjectSummary,
   CategoryRef,
@@ -109,7 +109,15 @@ export async function getIntelligenceObject(
       throw new Error('GetIntelligenceObject routine not found');
     }
 
-    const result = await routineFn(participantId).call() as ContractIntelligenceObject;
+    const response = await routineFn(participantId) as { output: ContractIntelligenceObject | null; error: unknown };
+
+    // Handle contract errors (e.g., participant doesn't exist)
+    if (response.error || !response.output) {
+      logger.debug({ participantId, error: response.error }, 'Participant not found or contract error');
+      return null;
+    }
+
+    const result = response.output;
 
     if (!result || toNumber(result.Version) === 0) {
       return null;
@@ -117,7 +125,8 @@ export async function getIntelligenceObject(
 
     // Map category refs
     const categoryRefs: Partial<Record<Category, CategoryRef>> = {};
-    for (const ref of result.CategoryRefs) {
+    const refs = result.CategoryRefs ?? [];
+    for (const ref of refs) {
       if (ref.Exists) {
         categoryRefs[ref.Category as Category] = mapCategoryRef(ref);
       }
@@ -126,12 +135,13 @@ export async function getIntelligenceObject(
     // Get active sessions
     const sessions: Session[] = [];
     const getSessionFn = driver.routines['GetSession'];
+    const activeSessions = result.ActiveSessions ?? [];
 
-    if (getSessionFn) {
-      for (const summary of result.ActiveSessions) {
-        const sessionRecord = await getSessionFn(participantId, summary.SessionId).call() as ContractSessionRecord;
-        if (sessionRecord.Exists) {
-          sessions.push(mapSession(sessionRecord));
+    if (getSessionFn && activeSessions.length > 0) {
+      for (const summary of activeSessions) {
+        const sessionResponse = await getSessionFn(participantId, summary.SessionId) as { output: { session: ContractSessionRecord } | null; error: unknown };
+        if (sessionResponse.output?.session?.Exists) {
+          sessions.push(mapSession(sessionResponse.output.session));
         }
       }
     }
@@ -171,9 +181,9 @@ export async function getCategoryRefs(
     }
 
     for (const category of categories) {
-      const ref = await getCategoryRefFn(participantId, category).call() as ContractCategoryRef;
-      if (ref.Exists) {
-        result[category] = mapCategoryRef(ref);
+      const response = await getCategoryRefFn(participantId, category) as { output: { cat_ref: ContractCategoryRef } | null; error: unknown };
+      if (response.output?.cat_ref?.Exists) {
+        result[category] = mapCategoryRef(response.output.cat_ref);
       }
     }
 

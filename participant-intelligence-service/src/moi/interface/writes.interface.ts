@@ -2,26 +2,53 @@
  * Writes MOI Interface
  *
  * Handles MOI network interactions for write operations.
+ * The server NEVER signs transactions - it only:
+ * 1. Prepares payload data for user signing
+ * 2. Relays user-signed interactions to the network
+ *
+ * Flow:
+ * 1. Client calls /writes/prepare with action + params + participantId
+ * 2. Server returns payload data (contract, method, args, sender info)
+ * 3. OpenClaw creates a wallet deep link from the payload
+ * 4. User's wallet builds ixArgs, signs, and returns ixArgs + signature
+ * 5. Client calls /writes/submit with ixArgs + signature + sender
+ * 6. Server relays the signed interaction to the MOI network
  */
 
 import { getLogicDriver, getProvider } from '../config/provider.config.js';
 import type { WritePayload, TransactionStatus } from '../../domain/models.js';
 import { ACTION_METHOD_MAP } from '../../domain/models.js';
 import type { WriteAction } from '../../domain/types.js';
-import { generateNonce, computeSigningDigest, getCurrentTimestamp } from '../../utils/crypto.utils.js';
+import { generateNonce, computeSigningDigest } from '../../utils/crypto.utils.js';
+import { getCurrentTimestamp } from '../../utils/index.js';
 import { getConfig } from '../../config/index.js';
 import { getLogger } from '../../logging/index.js';
 
 /**
  * Result of preparing a contract write
+ *
+ * OpenClaw uses this payload to create a wallet deep link.
+ * The wallet handles building, encoding, signing, and submitting.
  */
 export interface PreparedWrite {
+  /** Logic contract ID */
   contract: string;
+  /** Method name to call */
   method: string;
+  /** Method arguments */
   args: Record<string, unknown>;
+  /** Full payload for reference */
   payload: WritePayload;
+  /** Human-readable digest for display */
   signingDigest: string;
+  /** When this prepared write expires */
   expiresAt: number;
+  /** Sender info */
+  sender: {
+    id: string;
+    keyId: number;
+    sequence: number;
+  };
 }
 
 /**
@@ -34,17 +61,26 @@ export interface SubmitWriteResult {
 }
 
 /**
- * Prepare a contract write for signing
+ * Prepare a contract write for user signing
+ *
+ * Returns the payload data for OpenClaw to create a wallet deep link.
+ * The wallet handles building, encoding, signing, and submitting.
+ *
+ * @param action - The write action to perform
+ * @param params - Action-specific parameters
+ * @param participantId - The user's participant ID (will be the sender)
+ * @param keyId - The key ID the user will use for signing (default: 0)
  */
 export async function prepareContractWrite(
   action: WriteAction,
   params: Record<string, unknown>,
-  participantId: string
+  participantId: string,
+  keyId: number = 0
 ): Promise<PreparedWrite> {
   const logger = getLogger().child({ interface: 'writes' });
   const config = getConfig();
 
-  logger.debug({ action, participantId }, 'prepareContractWrite');
+  logger.debug({ action, participantId, keyId }, 'prepareContractWrite');
 
   const mapping = ACTION_METHOD_MAP[action];
   const nonce = generateNonce();
@@ -58,46 +94,84 @@ export async function prepareContractWrite(
     nonce,
   };
 
+  // Verify the method exists in the contract
+  const driver = await getLogicDriver();
+  const routineFn = driver.routines[payload.method];
+  if (!routineFn) {
+    throw new Error(`Unknown method: ${payload.method}`);
+  }
+
+  // Get the current sequence (nonce) for the user's account
+  const provider = await getProvider();
+  const sequence = await provider.getPendingInteractionCount(participantId, keyId);
+
+  // Compute a human-readable digest for display
   const signingDigest = computeSigningDigest(payload);
   const expiresAt = now + config.writeRequest.ttlSeconds;
 
+  logger.info({
+    method: payload.method,
+    participantId,
+    keyId,
+    sequence: Number(sequence),
+    expiresAt,
+  }, 'Prepared write request');
+
   return {
-    contract: mapping.contract,
+    contract: config.moi.intelligenceLogicId,
     method: mapping.method,
     args: params,
     payload,
     signingDigest,
     expiresAt,
+    sender: {
+      id: participantId,
+      keyId,
+      sequence: Number(sequence),
+    },
   };
 }
 
 /**
- * Submit a signed write to the MOI network
+ * Submit a user-signed write to the MOI network
+ *
+ * The server does NOT sign anything - it only relays the wallet's signed interaction.
+ *
+ * @param ixArgs - The POLO-serialized interaction object as hex (from wallet)
+ * @param signature - The wallet's signature of ixArgs
+ * @param sender - Sender info for signature construction
  */
 export async function submitSignedWrite(
-  payload: WritePayload,
-  _signature: string
+  ixArgs: string,
+  signature: string,
+  sender: { id: string; keyId: number }
 ): Promise<SubmitWriteResult> {
   const logger = getLogger().child({ interface: 'writes' });
 
-  logger.debug(
-    { contract: payload.contract, method: payload.method, nonce: payload.nonce },
-    'submitSignedWrite'
+  logger.info(
+    { sender: sender.id, signaturePrefix: signature.slice(0, 20) + '...' },
+    'Relaying wallet-signed write to network'
   );
 
   try {
-    const driver = await getLogicDriver();
+    const provider = await getProvider();
 
-    const routineFn = driver.routines[payload.method];
-    if (!routineFn) {
-      return {
-        success: false,
-        error: `Unknown method: ${payload.method}`,
-      };
-    }
+    // The wallet provides the fully serialized ixArgs and signature
+    // We just need to build the InteractionRequest and relay
+    const ixRequest = {
+      ix_args: ixArgs,
+      signatures: signature,
+    };
 
-    const args = buildArgsArray(payload.method, payload.args);
-    const response = await routineFn(...args).send();
+    logger.debug({
+      ixArgsLen: ixArgs.length,
+      signatureLen: signature.length
+    }, 'Sending interaction to network');
+
+    // Submit to the network
+    const response = await provider.sendInteraction(ixRequest);
+
+    logger.info({ txHash: response.hash }, 'Transaction submitted, waiting for confirmation');
     await response.wait();
 
     return {
@@ -106,77 +180,14 @@ export async function submitSignedWrite(
     };
   } catch (error) {
     logger.error(
-      { method: payload.method, error },
-      'Failed to submit signed write'
+      { error: error instanceof Error ? error.message : error },
+      'Failed to relay wallet-signed write'
     );
 
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
-  }
-}
-
-/**
- * Build arguments array from args object based on method signature
- */
-function buildArgsArray(method: string, args: Record<string, unknown>): unknown[] {
-  switch (method) {
-    case 'SetCategoryRef':
-      return [
-        args['category'],
-        args['ref'],
-        args['schemaVersion'],
-        BigInt(args['updatedAt'] as number),
-      ];
-
-    case 'RemoveCategoryRef':
-      return [
-        args['category'],
-        BigInt(args['updatedAt'] as number),
-      ];
-
-    case 'CreateSessionRequest':
-      return [
-        args['sessionId'],
-        args['agentId'],
-        args['purpose'],
-        args['approvedCategories'] ?? args['requiredCategories'],
-        args['approvedScopes'] ?? args['requiredScopes'],
-        BigInt(args['requestedUses'] as number),
-        BigInt(args['ttlSeconds'] as number),
-        args['approvalRef'] ?? '',
-      ];
-
-    case 'ApproveSession':
-      return [
-        args['sessionId'],
-        BigInt((args['issuedAt'] as number) ?? getCurrentTimestamp()),
-        BigInt(args['expiresAt'] as number),
-        BigInt(args['remainingUses'] as number),
-        args['approvalRef'] ?? '',
-      ];
-
-    case 'DenySession':
-      return [
-        args['sessionId'],
-        args['reason'] ?? '',
-      ];
-
-    case 'RevokeSession':
-      return [
-        args['sessionId'],
-        args['reason'] ?? '',
-      ];
-
-    case 'ConsumeSessionUse':
-      return [
-        args['sessionId'],
-        BigInt((args['currentTime'] as number) ?? getCurrentTimestamp()),
-      ];
-
-    default:
-      return Object.keys(args).sort().map(key => args[key]);
   }
 }
 
@@ -195,12 +206,16 @@ export async function getTransactionStatus(txHash: string): Promise<TransactionS
       return 'pending';
     }
 
+    // In MOI, status 0 means success, non-zero means failure
+    // Handle both number and string formats
     const status = receipt.status;
-    if (status === 1 || status === '0x1' || status === true) {
+    const statusNum = typeof status === 'string' ? parseInt(status, 16) : Number(status);
+
+    if (statusNum === 0) {
       return 'confirmed';
     }
 
-    if (status === 0 || status === '0x0' || status === false) {
+    if (statusNum > 0) {
       return 'failed';
     }
 
