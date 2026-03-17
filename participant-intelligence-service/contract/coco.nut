@@ -1,5 +1,5 @@
 [coco]
-version = "0.7.1-rc.2"
+version = "0.8.1"
 
 [module]
 name = "Intelligence"
@@ -18,7 +18,7 @@ output = "intelligence"
 
 [target.pisa]
 format = "ASM"
-version = "0.6.0"
+version = "0.7.0"
 
 [lab.render]
 big_int_as_hex = true
