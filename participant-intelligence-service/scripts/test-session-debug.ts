@@ -17,7 +17,9 @@ async function main() {
   const sessionId = 'sess-test-001';
 
   console.log('Calling GetSession...');
-  const response = await driver.routines.GetSession(participantId, sessionId);
+  const ctx = driver.routines.GetSession(participantId, sessionId);
+  const callResponse = await ctx.call();
+  const response = await callResponse.result() as { output: { session: unknown } | null; error: unknown };
   console.log('Raw response:', JSON.stringify(response, (_, v) => typeof v === 'bigint' ? v.toString() : v, 2));
 
   console.log('\nChecking response structure:');

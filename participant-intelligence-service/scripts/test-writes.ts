@@ -23,18 +23,35 @@ const MNEMONIC = process.env['MOI_MNEMONIC']!;
 const DERIVATION_PATH = process.env['MOI_DERIVATION_PATH']!;
 const NETWORK_URL = process.env['MOI_NETWORK_URL']!;
 
-async function post(endpoint: string, payload: unknown) {
+interface PrepareResponse {
+  requestId: string;
+  status: string;
+  ixObject: import('js-moi-sdk').InteractionObject;
+}
+
+interface SubmitResponse {
+  requestId: string;
+  status: string;
+  txHash: string;
+}
+
+interface StatusResponse {
+  txHash: string;
+  status: string;
+}
+
+async function post<T = Record<string, unknown>>(endpoint: string, payload: unknown): Promise<{ status: number; body: T | null }> {
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  return { status: res.status, body: await res.json().catch(() => null) };
+  return { status: res.status, body: await res.json().catch(() => null) as T | null };
 }
 
-async function get(endpoint: string) {
+async function get<T = Record<string, unknown>>(endpoint: string): Promise<{ status: number; body: T | null }> {
   const res = await fetch(`${BASE_URL}${endpoint}`);
-  return { status: res.status, body: await res.json().catch(() => null) };
+  return { status: res.status, body: await res.json().catch(() => null) as T | null };
 }
 
 async function main() {
@@ -53,7 +70,7 @@ async function main() {
   // ── Step 1: Prepare ──────────────────────────────────────────────────────────
   console.log('── Step 1: POST /v1/writes/prepare ─────────────────────────────');
   const requestId = `req_${Date.now()}`;
-  const { status: prepStatus, body: prepared } = await post('/v1/writes/prepare', {
+  const { status: prepStatus, body: prepared } = await post<PrepareResponse>('/v1/writes/prepare', {
     requestId,
     participantId,
     action: 'update_category_ref',
@@ -81,7 +98,7 @@ async function main() {
 
   // ── Step 3: Submit ───────────────────────────────────────────────────────────
   console.log('\n── Step 3: POST /v1/writes/submit ──────────────────────────────');
-  const { status: submitStatus, body: submitted } = await post('/v1/writes/submit', {
+  const { status: submitStatus, body: submitted } = await post<SubmitResponse>('/v1/writes/submit', {
     requestId: prepared.requestId,
     participantId,
     action: 'update_category_ref',
@@ -98,7 +115,7 @@ async function main() {
 
   // ── Step 4: Poll status ──────────────────────────────────────────────────────
   console.log(`\n── Step 4: GET /v1/writes/status/${submitted.txHash} ─`);
-  const { status: txStatus, body: txBody } = await get(`/v1/writes/status/${submitted.txHash}`);
+  const { status: txStatus, body: txBody } = await get<StatusResponse>(`/v1/writes/status/${submitted.txHash}`);
 
   console.log(`Status:   ${txStatus}`);
   console.log(`Response: ${JSON.stringify(txBody, null, 2)}`);

@@ -82,7 +82,6 @@ async function main(): Promise<void> {
     logger.info('  GET  /v1/intelligence/:participantId');
     logger.info('  POST /v1/categories/get');
     logger.info('  GET  /v1/sessions/:participantId/:sessionId');
-    logger.info('  POST /v1/sessions/ensure');
     logger.info('  POST /v1/sessions/validate');
     logger.info('  POST /v1/writes/prepare');
     logger.info('  POST /v1/writes/submit');

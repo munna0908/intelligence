@@ -3,11 +3,10 @@
  */
 
 import { Router } from 'express';
-import { getSession, ensureSession, validateSession } from '../controller/sessions.controller.js';
+import { getSession, validateSession } from '../controller/sessions.controller.js';
 import { validateBody, validateParams } from '../../../middlewares/validation.middleware.js';
 import {
   getSessionParamsSchema,
-  ensureSessionBodySchema,
   validateSessionBodySchema,
 } from '../../../validation/schemas.js';
 
@@ -18,13 +17,6 @@ router.get(
   '/sessions/:participantId/:sessionId',
   validateParams(getSessionParamsSchema),
   getSession
-);
-
-// POST /v1/sessions/ensure
-router.post(
-  '/sessions/ensure',
-  validateBody(ensureSessionBodySchema),
-  ensureSession
 );
 
 // POST /v1/sessions/validate

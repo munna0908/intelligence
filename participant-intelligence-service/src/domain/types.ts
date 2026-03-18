@@ -46,6 +46,3 @@ export const VALIDATION_FAILURE_REASONS = [
 ] as const;
 export type ValidationFailureReason = (typeof VALIDATION_FAILURE_REASONS)[number];
 
-// Ensure session response status
-export const ENSURE_SESSION_STATUSES = ['approved', 'pending_signature', 'denied'] as const;
-export type EnsureSessionStatus = (typeof ENSURE_SESSION_STATUSES)[number];

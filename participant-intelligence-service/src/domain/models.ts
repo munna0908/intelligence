@@ -8,7 +8,6 @@ import type {
   WriteAction,
   TransactionStatus,
   ValidationFailureReason,
-  EnsureSessionStatus,
 } from './types.js';
 import type { InteractionObject, InteractionRequest } from 'js-moi-sdk';
 
@@ -70,49 +69,6 @@ export interface ValidateSessionResponse {
   valid: boolean;
   reason: ValidationFailureReason | null;
 }
-
-// Ensure session request
-export interface EnsureSessionRequest {
-  participantId: string;
-  agentId: string;
-  purpose: string;
-  requiredCategories: Category[];
-  requiredScopes: string[];
-  requestedUses: number;
-  ttlSeconds: number;
-}
-
-// Write request returned to client for signing
-export interface WriteRequest {
-  action: WriteAction;
-  summary: string;
-  ixObject: InteractionObject;
-}
-
-// Ensure session response - approved
-export interface EnsureSessionApproved {
-  status: 'approved';
-  sessionId: string;
-}
-
-// Ensure session response - pending signature
-export interface EnsureSessionPendingSignature {
-  status: 'pending_signature';
-  sessionId: string;
-  message: string;
-  writeRequest: WriteRequest;
-}
-
-// Ensure session response - denied
-export interface EnsureSessionDenied {
-  status: 'denied';
-  message: string;
-}
-
-export type EnsureSessionResponse =
-  | EnsureSessionApproved
-  | EnsureSessionPendingSignature
-  | EnsureSessionDenied;
 
 // Prepare write request
 export interface PrepareWriteRequest {

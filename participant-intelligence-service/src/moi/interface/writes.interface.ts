@@ -54,6 +54,7 @@ export async function prepareContractWrite(
   }
 
   const args = buildArgsArray(mapping.method, params);
+  logger.debug({ method: mapping.method, args: JSON.stringify(args, (_, v) => typeof v === 'bigint' ? v.toString() : v) }, 'buildArgsArray result');
   const ctx = routineFn(...args);
 
   const fuel_limit = Number(await ctx.estimateFuel());

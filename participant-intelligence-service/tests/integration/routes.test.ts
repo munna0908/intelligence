@@ -92,44 +92,6 @@ describe('API Routes', () => {
     });
   });
 
-  describe('POST /v1/sessions/ensure', () => {
-    it('should return approved for existing session', async () => {
-      const response = await request(app)
-        .post('/v1/sessions/ensure')
-        .send({
-          participantId: 'participant_001',
-          agentId: 'openclaw_whatsapp_bot',
-          purpose: 'food_ordering',
-          requiredCategories: ['FOOD'],
-          requiredScopes: ['preferences.food.read'],
-          requestedUses: 3,
-          ttlSeconds: 1800,
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body.status).toBe('approved');
-      expect(response.body.sessionId).toBe('sess_existing_001');
-    });
-
-    it('should return pending_signature for new session', async () => {
-      const response = await request(app)
-        .post('/v1/sessions/ensure')
-        .send({
-          participantId: 'participant_002',
-          agentId: 'new_agent',
-          purpose: 'new_purpose',
-          requiredCategories: ['ADDRESS'],
-          requiredScopes: ['profile.address.read'],
-          requestedUses: 5,
-          ttlSeconds: 1800,
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body.status).toBe('pending_signature');
-      expect(response.body.writeRequest).toBeDefined();
-    });
-  });
-
   describe('POST /v1/sessions/validate', () => {
     it('should validate existing session', async () => {
       const response = await request(app)
@@ -183,12 +145,11 @@ describe('API Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('ready_to_sign');
-      expect(response.body.signingDigest).toMatch(/^0x/);
-      // Note: ixArgs is NOT returned - the wallet builds it from payload
-      expect(response.body.contract).toBeDefined();
       expect(response.body.method).toBe('SetCategoryRef');
-      expect(response.body.sender).toBeDefined();
-      expect(response.body.sender.id).toBe('participant_001');
+      expect(response.body.ixObject).toBeDefined();
+      expect(response.body.ixObject.sender).toBeDefined();
+      expect(response.body.ixObject.fuel_limit).toBeDefined();
+      expect(response.body.expiresAt).toBeGreaterThan(Date.now() / 1000);
     });
   });
 
@@ -211,24 +172,20 @@ describe('API Routes', () => {
 
       const prepared = prepareResponse.body;
 
-      // The wallet builds ixArgs from the payload
-      // For testing, we create mock ixArgs as hex-encoded payload
-      const mockIxArgs = '0x' + Buffer.from(JSON.stringify(prepared.payload)).toString('hex');
+      // Create a mock signed interaction request (as the wallet would)
+      const signedIx = {
+        ix_args: '0x1234567890abcdef',
+        signatures: '0xmocksignature123',
+      };
 
-      // Then submit with wallet-built ixArgs and signature
+      // Then submit with the signed interaction
       const response = await request(app)
         .post('/v1/writes/submit')
         .send({
           requestId: prepared.requestId,
           participantId: 'participant_001',
           action: 'update_category_ref',
-          payload: prepared.payload,
-          signature: '0x1234567890abcdef',
-          ixArgs: mockIxArgs,
-          sender: {
-            id: prepared.sender.id,
-            keyId: prepared.sender.keyId,
-          },
+          signedIx,
         });
 
       expect(response.status).toBe(200);

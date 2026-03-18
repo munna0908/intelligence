@@ -108,17 +108,28 @@ export async function getIntelligenceObject(
       throw new Error('GetIntelligenceObject routine not found');
     }
 
-    const response = await routineFn(participantId) as { output: ContractIntelligenceObject | null; error: unknown };
+    // New SDK API: routines return a context, call .call() for reads
+    const ctx = routineFn(participantId);
+    const callResponse = await ctx.call();
+    const rawResult = await callResponse.result();
+
+    logger.debug({ participantId, rawResult: JSON.stringify(rawResult) }, 'GetIntelligenceObject raw result');
+
+    // The result structure may vary - handle both { output, error } and direct output
+    const response = rawResult as { output: ContractIntelligenceObject | null; error: unknown } | ContractIntelligenceObject;
+
+    // Check if it's wrapped in { output, error } or is direct output
+    const result = 'output' in response ? response.output : response as ContractIntelligenceObject;
+    const error = 'error' in response ? response.error : null;
 
     // Handle contract errors (e.g., participant doesn't exist)
-    if (response.error || !response.output) {
-      logger.debug({ participantId, error: response.error }, 'Participant not found or contract error');
+    if (error || !result) {
+      logger.debug({ participantId, error }, 'Participant not found or contract error');
       return null;
     }
 
-    const result = response.output;
-
-    if (!result || toNumber(result.Version) === 0) {
+    if (toNumber(result.Version) === 0) {
+      logger.debug({ participantId }, 'Intelligence object has version 0');
       return null;
     }
 
@@ -138,7 +149,9 @@ export async function getIntelligenceObject(
 
     if (getSessionFn && activeSessions.length > 0) {
       for (const summary of activeSessions) {
-        const sessionResponse = await getSessionFn(participantId, summary.SessionId) as { output: { session: ContractSessionRecord } | null; error: unknown };
+        const sessionCtx = getSessionFn(participantId, summary.SessionId);
+        const sessionCallResponse = await sessionCtx.call();
+        const sessionResponse = await sessionCallResponse.result() as { output: { session: ContractSessionRecord } | null; error: unknown };
         if (sessionResponse.output?.session?.Exists) {
           sessions.push(mapSession(sessionResponse.output.session));
         }
@@ -180,7 +193,9 @@ export async function getCategoryRefs(
     }
 
     for (const category of categories) {
-      const response = await getCategoryRefFn(participantId, category) as { output: { cat_ref: ContractCategoryRef } | null; error: unknown };
+      const ctx = getCategoryRefFn(participantId, category);
+      const callResponse = await ctx.call();
+      const response = await callResponse.result() as { output: { cat_ref: ContractCategoryRef } | null; error: unknown };
       if (response.output?.cat_ref?.Exists) {
         result[category] = mapCategoryRef(response.output.cat_ref);
       }

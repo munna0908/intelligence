@@ -7,7 +7,6 @@ import {
   getIntelligenceParamsSchema,
   getCategoriesBodySchema,
   getSessionParamsSchema,
-  ensureSessionBodySchema,
   validateSessionBodySchema,
   prepareWriteBodyBaseSchema,
   submitWriteBodySchema,
@@ -53,46 +52,6 @@ describe('Validation Schemas', () => {
       const result = getCategoriesBodySchema.safeParse({
         participantId: 'participant_001',
         categories: [],
-      });
-      expect(result.success).toBe(false);
-    });
-  });
-
-  describe('ensureSessionBodySchema', () => {
-    it('should accept valid request', () => {
-      const result = ensureSessionBodySchema.safeParse({
-        participantId: 'participant_001',
-        agentId: 'openclaw_whatsapp_bot',
-        purpose: 'food_ordering',
-        requiredCategories: ['FOOD', 'HEALTH'],
-        requiredScopes: ['preferences.food.read', 'health.read'],
-        requestedUses: 5,
-        ttlSeconds: 1800,
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('should reject missing purpose', () => {
-      const result = ensureSessionBodySchema.safeParse({
-        participantId: 'participant_001',
-        agentId: 'openclaw_whatsapp_bot',
-        requiredCategories: ['FOOD'],
-        requiredScopes: ['preferences.food.read'],
-        requestedUses: 5,
-        ttlSeconds: 1800,
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject negative requestedUses', () => {
-      const result = ensureSessionBodySchema.safeParse({
-        participantId: 'participant_001',
-        agentId: 'openclaw_whatsapp_bot',
-        purpose: 'food_ordering',
-        requiredCategories: ['FOOD'],
-        requiredScopes: ['preferences.food.read'],
-        requestedUses: -1,
-        ttlSeconds: 1800,
       });
       expect(result.success).toBe(false);
     });
@@ -176,35 +135,19 @@ describe('Validation Schemas', () => {
         requestId: 'req_123',
         participantId: 'participant_001',
         action: 'update_category_ref',
-        payload: {
-          contract: 'ParticipantIntelligenceEngine',
-          method: 'SetCategoryRef',
-          args: { category: 'FOOD' },
-          participantId: 'participant_001',
-          nonce: 'nonce_001',
-        },
-        signature: '0xsignedpayload123',
-        ixArgs: '0x1234567890abcdef',
-        sender: {
-          id: 'participant_001',
-          keyId: 0,
+        signedIx: {
+          ix_args: '0x1234567890abcdef',
+          signatures: '0xsignedpayload123',
         },
       });
       expect(result.success).toBe(true);
     });
 
-    it('should reject missing signature', () => {
+    it('should reject missing signedIx', () => {
       const result = submitWriteBodySchema.safeParse({
         requestId: 'req_123',
         participantId: 'participant_001',
         action: 'update_category_ref',
-        payload: {
-          contract: 'ParticipantIntelligenceEngine',
-          method: 'SetCategoryRef',
-          args: { category: 'FOOD' },
-          participantId: 'participant_001',
-          nonce: 'nonce_001',
-        },
       });
       expect(result.success).toBe(false);
     });

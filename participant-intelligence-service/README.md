@@ -175,46 +175,6 @@ Validates a session for the Inference Service.
 
 ### Write APIs
 
-#### POST /v1/sessions/ensure
-
-Used by OpenClaw to create or reuse a session.
-
-**Request:**
-```json
-{
-  "participantId": "participant_001",
-  "agentId": "openclaw_whatsapp_bot",
-  "purpose": "food_ordering",
-  "requiredCategories": ["FOOD", "HEALTH"],
-  "requiredScopes": ["preferences.food.read", "health.read"],
-  "requestedUses": 5,
-  "ttlSeconds": 1800
-}
-```
-
-**Response (approved - existing valid session):**
-```json
-{
-  "status": "approved",
-  "sessionId": "sess_123"
-}
-```
-
-**Response (pending_signature - needs approval):**
-```json
-{
-  "status": "pending_signature",
-  "sessionId": "sess_456",
-  "message": "Please approve access to FOOD and HEALTH for food_ordering.",
-  "writeRequest": {
-    "action": "create_session_request",
-    "summary": "Approve agent access for FOOD and HEALTH",
-    "payload": {...},
-    "signingDigest": "0xabc123"
-  }
-}
-```
-
 #### POST /v1/writes/prepare
 
 Prepares payload data for a contract write. The server does NOT build the interaction object (ixArgs) - this is done by the user's wallet.

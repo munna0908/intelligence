@@ -31,17 +31,6 @@ export const getSessionParamsSchema = z.object({
   sessionId: sessionIdSchema,
 });
 
-// POST /v1/sessions/ensure
-export const ensureSessionBodySchema = z.object({
-  participantId: participantIdSchema,
-  agentId: agentIdSchema,
-  purpose: z.string().min(1, 'purpose is required'),
-  requiredCategories: categoriesArraySchema,
-  requiredScopes: scopesArraySchema,
-  requestedUses: z.number().int().positive('requestedUses must be a positive integer'),
-  ttlSeconds: z.number().int().positive('ttlSeconds must be a positive integer'),
-});
-
 // POST /v1/sessions/validate
 export const validateSessionBodySchema = z.object({
   participantId: participantIdSchema,
@@ -69,6 +58,7 @@ export const updateCategoryRefParamsSchema = z.object({
 });
 
 export const createSessionRequestParamsSchema = z.object({
+  sessionId: sessionIdSchema,
   agentId: agentIdSchema,
   purpose: z.string().min(1),
   requiredCategories: categoriesArraySchema,
@@ -79,6 +69,10 @@ export const createSessionRequestParamsSchema = z.object({
 
 export const approveSessionParamsSchema = z.object({
   sessionId: sessionIdSchema,
+  issuedAt: z.number().int().positive().optional(),
+  expiresAt: z.number().int().positive(),
+  remainingUses: z.number().int().positive(),
+  approvalRef: z.string().optional(),
 });
 
 export const denySessionParamsSchema = z.object({
@@ -114,7 +108,6 @@ export const getWriteStatusParamsSchema = z.object({
 export type GetIntelligenceParams = z.infer<typeof getIntelligenceParamsSchema>;
 export type GetCategoriesBody = z.infer<typeof getCategoriesBodySchema>;
 export type GetSessionParams = z.infer<typeof getSessionParamsSchema>;
-export type EnsureSessionBody = z.infer<typeof ensureSessionBodySchema>;
 export type ValidateSessionBody = z.infer<typeof validateSessionBodySchema>;
 export type PrepareWriteBody = z.infer<typeof prepareWriteBodyBaseSchema>;
 export type SubmitWriteBody = z.infer<typeof submitWriteBodySchema>;

@@ -58,21 +58,48 @@ async function readSessionFromState(
       }),
     ]);
 
-    // Array fields — attempt to read; fall back to empty if unsupported
-    let approvedCategories: Category[] = [];
-    let approvedScopes: string[] = [];
+    // Array fields — read length first, then each element individually
+    const logger = getLogger().child({ interface: 'sessions' });
+    const approvedCategories: Category[] = [];
+    const approvedScopes: string[] = [];
+
     try {
-      const cats = await driver.ephemeralState.get<string[]>(participantId, (b: any) => {
+      // Get array length (ephemeralState returns length when reading array field directly)
+      const catsLength = await driver.ephemeralState.get<number>(participantId, (b: any) => {
         b.entity('sessions').property(sessionId).field('ApprovedCategories');
       });
-      if (Array.isArray(cats)) approvedCategories = cats as Category[];
-    } catch { /* not supported */ }
+      logger.debug({ sessionId, catsLength }, 'ApprovedCategories length');
+
+      // Read each element by index
+      for (let i = 0; i < (catsLength ?? 0); i++) {
+        const cat = await driver.ephemeralState.get<string>(participantId, (b: any) => {
+          b.entity('sessions').property(sessionId).field('ApprovedCategories').at(i);
+        });
+        if (cat) approvedCategories.push(cat as Category);
+      }
+    } catch (err) {
+      logger.debug({ sessionId, error: err }, 'Failed to read ApprovedCategories');
+    }
+
     try {
-      const scopes = await driver.ephemeralState.get<string[]>(participantId, (b: any) => {
+      // Get array length
+      const scopesLength = await driver.ephemeralState.get<number>(participantId, (b: any) => {
         b.entity('sessions').property(sessionId).field('ApprovedScopes');
       });
-      if (Array.isArray(scopes)) approvedScopes = scopes;
-    } catch { /* not supported */ }
+      logger.debug({ sessionId, scopesLength }, 'ApprovedScopes length');
+
+      // Read each element by index
+      for (let i = 0; i < (scopesLength ?? 0); i++) {
+        const scope = await driver.ephemeralState.get<string>(participantId, (b: any) => {
+          b.entity('sessions').property(sessionId).field('ApprovedScopes').at(i);
+        });
+        if (scope) approvedScopes.push(scope);
+      }
+    } catch (err) {
+      logger.debug({ sessionId, error: err }, 'Failed to read ApprovedScopes');
+    }
+
+    logger.debug({ sessionId, approvedCategories, approvedScopes, status, agentId }, 'Session read from state');
 
     return {
       sessionId,
@@ -145,6 +172,7 @@ export async function findValidSession(
   const sessions = await getSessions(participantId);
 
   for (const session of sessions) {
+    logger.debug( session, '####');
     if (
       session.status === 'ACTIVE' &&
       session.agentId === agentId &&

@@ -85,8 +85,9 @@ async function deployLogic(manifest: object, wallet: Wallet): Promise<Deployment
     console.log('Deploying Intelligence logic to devnet...');
     console.log('(This may take a moment...)\n');
 
-    // Deploy the logic (empty string for actor-state-only contracts)
-    const deployIx = await factory.deploy();
+    // Deploy the logic - new SDK returns a context, call .send() to execute
+    const deployCtx = factory.deploy();
+    const deployIx = await deployCtx.send();
 
     console.log(`Transaction submitted: ${deployIx.hash}`);
     console.log('Waiting for receipt...');

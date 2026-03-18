@@ -6,21 +6,16 @@
 
 import * as moiInterface from '../moi/interface/sessions.interface.js';
 import * as mockInterface from '../moi/interface/mock.interface.js';
-import * as writeMoiInterface from '../moi/interface/writes.interface.js';
 import type {
   Session,
-  EnsureSessionRequest,
-  EnsureSessionResponse,
   ValidateSessionRequest,
   ValidateSessionResponse,
 } from '../domain/models.js';
-import { getCurrentTimestamp, generateSessionId } from '../utils/crypto.utils.js';
 import { getConfig } from '../config/index.js';
 import { getLogger } from '../logging/index.js';
 
 export interface ISessionsService {
   getSession(participantId: string, sessionId: string): Promise<Session | null>;
-  ensureSession(request: EnsureSessionRequest): Promise<EnsureSessionResponse>;
   validateSession(request: ValidateSessionRequest): Promise<ValidateSessionResponse>;
 }
 
@@ -56,99 +51,6 @@ export class SessionsService implements ISessionsService {
       return session;
     } catch (error) {
       this.logger.error({ participantId, sessionId, error }, 'Failed to fetch session');
-      throw error;
-    }
-  }
-
-  /**
-   * Ensure a session exists for the agent with required access
-   *
-   * If a valid existing session satisfies the requirements, returns approved.
-   * Otherwise, returns a signable write request for session creation.
-   */
-  async ensureSession(request: EnsureSessionRequest): Promise<EnsureSessionResponse> {
-    const {
-      participantId,
-      agentId,
-      purpose,
-      requiredCategories,
-      requiredScopes,
-      requestedUses,
-      ttlSeconds,
-    } = request;
-
-    this.logger.info(
-      { participantId, agentId, purpose, requiredCategories },
-      'Ensuring session'
-    );
-
-    try {
-      const currentTime = getCurrentTimestamp();
-
-      // Check for existing valid session
-      const existingSession = this.useMock
-        ? await mockInterface.mockFindValidSession(
-            participantId,
-            agentId,
-            requiredCategories,
-            requiredScopes,
-            currentTime
-          )
-        : await moiInterface.findValidSession(
-            participantId,
-            agentId,
-            requiredCategories,
-            requiredScopes,
-            currentTime
-          );
-
-      if (existingSession) {
-        this.logger.info(
-          { participantId, agentId, sessionId: existingSession.sessionId },
-          'Found existing valid session'
-        );
-
-        return {
-          status: 'approved',
-          sessionId: existingSession.sessionId,
-        };
-      }
-
-      // No valid session exists, prepare a write request
-      this.logger.info(
-        { participantId, agentId },
-        'No valid session found, preparing write request'
-      );
-
-      const sessionId = generateSessionId();
-      const categoryList = requiredCategories.join(' and ');
-
-      const args = {
-        sessionId,
-        agentId,
-        purpose,
-        requiredCategories,
-        requiredScopes,
-        requestedUses,
-        ttlSeconds,
-      };
-
-      const prepared = this.useMock
-        ? await mockInterface.mockPrepareContractWrite('create_session_request', args, participantId)
-        : await writeMoiInterface.prepareContractWrite('create_session_request', args, participantId);
-
-      return {
-        status: 'pending_signature',
-        sessionId,
-        message: `Please approve access to ${categoryList} for ${purpose}.`,
-        writeRequest: {
-          action: 'create_session_request',
-          summary: `Approve agent access for ${categoryList}`,
-          ixObject: prepared.ixObject,
-        },
-      };
-    } catch (error) {
-      this.logger.error({ participantId, agentId, error }, 'Failed to ensure session');
       throw error;
     }
   }

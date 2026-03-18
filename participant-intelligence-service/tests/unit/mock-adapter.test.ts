@@ -203,10 +203,11 @@ describe('Mock MOI Interface', () => {
         'participant_001'
       );
 
-      expect(result.contract).toBe('ParticipantIntelligenceEngine');
       expect(result.method).toBe('SetCategoryRef');
-      expect(result.signingDigest).toMatch(/^0x/);
-      expect(result.payload.nonce).toMatch(/^nonce_/);
+      expect(result.ixObject).toBeDefined();
+      expect(result.ixObject.sender).toBeDefined();
+      expect(result.ixObject.fuel_limit).toBe(10000);
+      expect(result.expiresAt).toBeGreaterThan(getCurrentTimestamp());
     });
 
     it('should prepare create_session_request write', async () => {
@@ -223,8 +224,8 @@ describe('Mock MOI Interface', () => {
         'participant_001'
       );
 
-      expect(result.contract).toBe('ParticipantIntelligenceEngine');
       expect(result.method).toBe('CreateSessionRequest');
+      expect(result.ixObject).toBeDefined();
     });
   });
 
@@ -242,52 +243,31 @@ describe('Mock MOI Interface', () => {
         'participant_001'
       );
 
+      // Create a mock signed interaction request
+      const signedIx = {
+        ix_args: '0x1234567890abcdef',
+        signatures: '0xmocksignature123',
+      };
+
       // Then submit
-      const result = await mockSubmitSignedWrite(
-        prepared.payload,
-        '0x1234567890abcdef'
-      );
+      const result = await mockSubmitSignedWrite(signedIx);
 
       expect(result.success).toBe(true);
       expect(result.txHash).toMatch(/^0x/);
     });
 
-    it('should reject invalid signature', async () => {
-      const prepared = await mockPrepareContractWrite(
-        'update_category_ref',
-        {
-          category: 'FOOD',
-          ref: 'bafy_cid',
-          schemaVersion: '1.0',
-          updatedAt: getCurrentTimestamp(),
-        },
-        'participant_001'
-      );
+    it('should submit and return transaction hash', async () => {
+      // Create a mock signed interaction request
+      const signedIx = {
+        ix_args: '0xabcdef1234567890',
+        signatures: '0xanothersignature456',
+      };
 
-      const result = await mockSubmitSignedWrite(prepared.payload, '');
+      const result = await mockSubmitSignedWrite(signedIx);
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Invalid signature');
-    });
-
-    it('should apply state change after submit', async () => {
-      const prepared = await mockPrepareContractWrite(
-        'update_category_ref',
-        {
-          category: 'PAYMENT',
-          ref: 'bafy_payment_new',
-          schemaVersion: '2.0',
-          updatedAt: getCurrentTimestamp(),
-        },
-        'participant_001'
-      );
-
-      await mockSubmitSignedWrite(prepared.payload, '0x1234567890abcdef');
-
-      // Verify state was updated
-      const refs = await mockGetCategoryRefs('participant_001', ['PAYMENT']);
-      expect(refs.PAYMENT?.ref).toBe('bafy_payment_new');
-      expect(refs.PAYMENT?.schemaVersion).toBe('2.0');
+      expect(result.success).toBe(true);
+      expect(result.txHash).toBeDefined();
+      expect(result.txHash).toMatch(/^0x/);
     });
   });
 

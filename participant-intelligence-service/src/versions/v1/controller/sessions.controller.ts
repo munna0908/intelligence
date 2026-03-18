@@ -41,47 +41,6 @@ export async function getSession(
 }
 
 /**
- * POST /v1/sessions/ensure
- */
-export async function ensureSession(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  const logger = getLogger().child({ requestId: req.requestId });
-
-  try {
-    const body = req.body;
-    logger.info(
-      {
-        participantId: body.participantId,
-        agentId: body.agentId,
-        purpose: body.purpose,
-        requiredCategories: body.requiredCategories,
-      },
-      'POST sessions/ensure'
-    );
-
-    const service = getSessionsService();
-    const result = await service.ensureSession(body);
-
-    logger.info(
-      {
-        participantId: body.participantId,
-        agentId: body.agentId,
-        status: result.status,
-        sessionId: 'sessionId' in result ? result.sessionId : undefined,
-      },
-      'Session ensure result'
-    );
-
-    res.status(200).json(result);
-  } catch (error) {
-    next(error);
-  }
-}
-
-/**
  * POST /v1/sessions/validate
  */
 export async function validateSession(

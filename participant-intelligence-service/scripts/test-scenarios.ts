@@ -148,38 +148,151 @@ async function writeCategoryRef(
   return txHash;
 }
 
-// ─── Check ensure session ──────────────────────────────────────────────────────
-async function checkEnsureSession(
+// ─── Create and approve a session ───────────────────────────────────────────────
+async function createAndApproveSession(
+  wallet: Wallet,
   participantId: string,
   agentId: string,
   purpose: string,
   category: string,
   scopes: string[]
-): Promise<void> {
-  const { status, body } = await post('/v1/sessions/ensure', {
+): Promise<string | null> {
+  // Use crypto-strength random UUID to ensure uniqueness
+  const uuid = crypto.randomUUID();
+  const sessionId = `sess_${uuid}`;
+  const sigAlgo = wallet.signingAlgorithms['ecdsa_secp256k1'];
+
+  // Step 1: Create session request
+  console.log(`    → Creating session request... sessionId=${sessionId}`);
+  const createResponse = await post('/v1/writes/prepare', {
+    requestId: `create_${Date.now()}`,
+    participantId,
+    action: 'create_session_request',
+    params: {
+      sessionId,
+      agentId,
+      purpose,
+      requiredCategories: [category],
+      requiredScopes: scopes,
+      requestedUses: 10,
+      ttlSeconds: 3600,
+    },
+  });
+
+  if (createResponse.status !== 200 || !(createResponse.body as any)?.ixObject) {
+    console.log(`    ✗ Create prepare failed [${createResponse.status}]: ${JSON.stringify(createResponse.body)}`);
+    return null;
+  }
+  console.log(`    ✓ Create prepared  method=${(createResponse.body as any).method}`);
+
+  // Sign and submit creation
+  const createIxObject = (createResponse.body as any).ixObject;
+  const signedCreate = await wallet.signInteraction(createIxObject, sigAlgo);
+  console.log(`    ✓ Create signed`);
+
+  const { status: createSubmitStatus, body: createSubmitted } = await post('/v1/writes/submit', {
+    requestId: (createResponse.body as any).requestId,
+    participantId,
+    action: 'create_session_request',
+    signedIx: signedCreate,
+  });
+
+  if (createSubmitStatus !== 200 || !(createSubmitted as any)?.txHash) {
+    console.log(`    ✗ Create submit failed [${createSubmitStatus}]: ${JSON.stringify(createSubmitted)}`);
+    return null;
+  }
+  const createTxHash = (createSubmitted as any).txHash as string;
+  console.log(`    ✓ Create submitted txHash=${createTxHash}`);
+
+  // Wait for creation confirmation
+  const createOutcome = await waitForTx(createTxHash);
+  if (createOutcome !== 'confirmed') {
+    console.log(`    ✗ Create transaction ${createOutcome}`);
+    return null;
+  }
+  console.log(`    ✓ Session creation confirmed  sessionId=${sessionId}`);
+
+  // Step 2: Approve the session
+  console.log(`    → Approving session...`);
+  const now = Math.floor(Date.now() / 1000);
+  const approveResponse = await post('/v1/writes/prepare', {
+    requestId: `approve_${Date.now()}`,
+    participantId,
+    action: 'approve_session',
+    params: {
+      sessionId,
+      issuedAt: now,
+      expiresAt: now + 3600, // 1 hour from now
+      remainingUses: 10,
+      approvalRef: '',
+    },
+  });
+
+  if (approveResponse.status !== 200 || !(approveResponse.body as any)?.ixObject) {
+    console.log(`    ✗ Approve prepare failed [${approveResponse.status}]: ${JSON.stringify(approveResponse.body)}`);
+    return null;
+  }
+  console.log(`    ✓ Approve prepared  method=${(approveResponse.body as any).method}`);
+
+  // Sign and submit approval
+  const approveIxObject = (approveResponse.body as any).ixObject;
+  const signedApprove = await wallet.signInteraction(approveIxObject, sigAlgo);
+  console.log(`    ✓ Approve signed`);
+
+  const { status: approveSubmitStatus, body: approveSubmitted } = await post('/v1/writes/submit', {
+    requestId: (approveResponse.body as any).requestId,
+    participantId,
+    action: 'approve_session',
+    signedIx: signedApprove,
+  });
+
+  if (approveSubmitStatus !== 200 || !(approveSubmitted as any)?.txHash) {
+    console.log(`    ✗ Approve submit failed [${approveSubmitStatus}]: ${JSON.stringify(approveSubmitted)}`);
+    return null;
+  }
+  const approveTxHash = (approveSubmitted as any).txHash as string;
+  console.log(`    ✓ Approve submitted txHash=${approveTxHash}`);
+
+  // Wait for approval confirmation
+  const approveOutcome = await waitForTx(approveTxHash);
+  if (approveOutcome !== 'confirmed') {
+    console.log(`    ✗ Approve transaction ${approveOutcome}`);
+    return null;
+  }
+  console.log(`    ✓ Session approved and active!  sessionId=${sessionId}`);
+
+  return sessionId;
+}
+
+// ─── Validate session has correct permissions ───────────────────────────────────
+async function validateSession(
+  participantId: string,
+  agentId: string,
+  sessionId: string,
+  category: string,
+  scopes: string[]
+): Promise<boolean> {
+  const { status, body } = await post('/v1/sessions/validate', {
     participantId,
     agentId,
-    purpose,
+    sessionId,
     requiredCategories: [category],
-    requiredScopes:     scopes,
-    requestedUses:      10,
-    ttlSeconds:         3600,
+    requiredScopes: scopes,
+    currentTime: Math.floor(Date.now() / 1000),
   });
 
   const b = body as any;
   if (status !== 200) {
-    console.log(`    ✗ ensure_session [${status}]: ${JSON.stringify(body)}`);
-    return;
+    console.log(`    ✗ validate_session [${status}]: ${JSON.stringify(body)}`);
+    return false;
   }
 
-  if (b.status === 'approved') {
-    console.log(`    ✓ Session already active  sessionId=${b.sessionId}`);
-  } else if (b.status === 'pending_signature') {
-    console.log(`    ✓ Session pending signature  sessionId=${b.sessionId}`);
-    console.log(`      message: ${b.message}`);
-    console.log(`      ixObject present: ${!!b.writeRequest?.ixObject}`);
+  if (b.valid) {
+    console.log(`    ✓ Session validated: has required permissions`);
+    return true;
   } else {
-    console.log(`    ✓ ensure_session status=${b.status}`);
+    console.log(`    ✗ Session invalid: ${b.reason}`);
+    return false;
   }
 }
 
@@ -227,8 +340,14 @@ async function main() {
     }
 
     console.log(`│`);
-    console.log(`│  [Session] ensure_session for ${scenario.agentId}`);
-    await checkEnsureSession(participantId, scenario.agentId, scenario.purpose, scenario.category, scenario.scopes);
+    console.log(`│  [Session] Create and approve session for ${scenario.agentId}`);
+    const sessionId = await createAndApproveSession(wallet, participantId, scenario.agentId, scenario.purpose, scenario.category, scenario.scopes);
+
+    if (sessionId) {
+      console.log(`│`);
+      console.log(`│  [Validate] Check session has required permissions`);
+      await validateSession(participantId, scenario.agentId, sessionId, scenario.category, scenario.scopes);
+    }
 
     console.log(`└${'─'.repeat(50)}`);
     console.log('');

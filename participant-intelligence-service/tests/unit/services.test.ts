@@ -64,46 +64,6 @@ describe('SessionsService', () => {
     });
   });
 
-  describe('ensureSession', () => {
-    it('should return approved for existing valid session', async () => {
-      const result = await service.ensureSession({
-        participantId: 'participant_001',
-        agentId: 'openclaw_whatsapp_bot',
-        purpose: 'food_ordering',
-        requiredCategories: ['FOOD'],
-        requiredScopes: ['preferences.food.read'],
-        requestedUses: 3,
-        ttlSeconds: 1800,
-      });
-
-      expect(result.status).toBe('approved');
-      if (result.status === 'approved') {
-        expect(result.sessionId).toBe('sess_existing_001');
-      }
-    });
-
-    it('should return pending_signature when no valid session exists', async () => {
-      const result = await service.ensureSession({
-        participantId: 'participant_002',
-        agentId: 'new_agent',
-        purpose: 'new_purpose',
-        requiredCategories: ['ADDRESS'],
-        requiredScopes: ['profile.address.read'],
-        requestedUses: 5,
-        ttlSeconds: 1800,
-      });
-
-      expect(result.status).toBe('pending_signature');
-      if (result.status === 'pending_signature') {
-        expect(result.sessionId).toMatch(/^sess_/);
-        expect(result.message).toContain('ADDRESS');
-        expect(result.writeRequest.action).toBe('create_session_request');
-        expect(result.writeRequest.ixObject).toBeDefined();
-        expect(result.writeRequest.ixObject.ix_operations).toHaveLength(1);
-      }
-    });
-  });
-
   describe('validateSession', () => {
     it('should return valid for valid session', async () => {
       const result = await service.validateSession({
