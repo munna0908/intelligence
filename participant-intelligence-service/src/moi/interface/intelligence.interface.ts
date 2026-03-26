@@ -4,6 +4,7 @@
  * Handles MOI network interactions for intelligence object operations.
  */
 
+import { Hex, LockType } from 'js-moi-sdk';
 import { getLogicDriver } from '../config/provider.config.js';
 import type {
   IntelligenceObjectSummary,
@@ -110,17 +111,16 @@ export async function getIntelligenceObject(
 
     // New SDK API: routines return a context, call .call() for reads
     const ctx = routineFn(participantId);
-    const callResponse = await ctx.call();
+    const callResponse = await ctx.call({
+      participants: [{ id: participantId as Hex, lock_type: LockType.MUTATE_LOCK }],
+    });
     const rawResult = await callResponse.result();
 
     logger.debug({ participantId, rawResult: JSON.stringify(rawResult) }, 'GetIntelligenceObject raw result');
 
-    // The result structure may vary - handle both { output, error } and direct output
-    const response = rawResult as { output: ContractIntelligenceObject | null; error: unknown } | ContractIntelligenceObject;
-
-    // Check if it's wrapped in { output, error } or is direct output
-    const result = 'output' in response ? response.output : response as ContractIntelligenceObject;
-    const error = 'error' in response ? response.error : null;
+    const response = rawResult as { output: { intel_obj: ContractIntelligenceObject } | null; error: unknown };
+    const result = response.output?.intel_obj ?? null;
+    const error = response.error ?? null;
 
     // Handle contract errors (e.g., participant doesn't exist)
     if (error || !result) {
@@ -150,7 +150,9 @@ export async function getIntelligenceObject(
     if (getSessionFn && activeSessions.length > 0) {
       for (const summary of activeSessions) {
         const sessionCtx = getSessionFn(participantId, summary.SessionId);
-        const sessionCallResponse = await sessionCtx.call();
+        const sessionCallResponse = await sessionCtx.call({
+          participants: [{ id: participantId as Hex, lock_type: LockType.MUTATE_LOCK }],
+        });
         const sessionResponse = await sessionCallResponse.result() as { output: { session: ContractSessionRecord } | null; error: unknown };
         if (sessionResponse.output?.session?.Exists) {
           sessions.push(mapSession(sessionResponse.output.session));
@@ -194,7 +196,9 @@ export async function getCategoryRefs(
 
     for (const category of categories) {
       const ctx = getCategoryRefFn(participantId, category);
-      const callResponse = await ctx.call();
+      const callResponse = await ctx.call({
+        participants: [{ id: participantId as Hex, lock_type: LockType.MUTATE_LOCK }],
+      });
       const response = await callResponse.result() as { output: { cat_ref: ContractCategoryRef } | null; error: unknown };
       if (response.output?.cat_ref?.Exists) {
         result[category] = mapCategoryRef(response.output.cat_ref);

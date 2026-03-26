@@ -75,6 +75,23 @@ export const approveSessionParamsSchema = z.object({
   approvalRef: z.string().optional(),
 });
 
+// Combined schema: all fields from createSessionRequest + approveSession
+export const createAndApproveSessionParamsSchema = z.object({
+  // CreateSessionRequest fields
+  sessionId: sessionIdSchema,
+  agentId: agentIdSchema,
+  purpose: z.string().min(1),
+  requiredCategories: categoriesArraySchema,
+  requiredScopes: scopesArraySchema,
+  requestedUses: z.number().int().positive(),
+  ttlSeconds: z.number().int().positive(),
+  // ApproveSession fields
+  issuedAt: z.number().int().positive().optional(),
+  expiresAt: z.number().int().positive(),
+  remainingUses: z.number().int().positive(),
+  approvalRef: z.string().optional(),
+});
+
 export const denySessionParamsSchema = z.object({
   sessionId: sessionIdSchema,
   reason: z.string().optional(),

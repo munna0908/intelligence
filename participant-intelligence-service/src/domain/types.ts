@@ -25,6 +25,7 @@ export const WRITE_ACTIONS = [
   'update_category_ref',
   'create_session_request',
   'approve_session',
+  'create_and_approve_session',
   'deny_session',
   'revoke_session',
 ] as const;

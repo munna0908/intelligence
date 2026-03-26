@@ -125,6 +125,10 @@ export const ACTION_METHOD_MAP: Record<WriteAction, { contract: string; method: 
     contract: 'ParticipantIntelligenceEngine',
     method: 'ApproveSession',
   },
+  create_and_approve_session: {
+    contract: 'ParticipantIntelligenceEngine',
+    method: 'CreateSessionRequest+ApproveSession',
+  },
   deny_session: {
     contract: 'ParticipantIntelligenceEngine',
     method: 'DenySession',

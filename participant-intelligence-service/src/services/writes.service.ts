@@ -20,6 +20,7 @@ import {
   updateCategoryRefParamsSchema,
   createSessionRequestParamsSchema,
   approveSessionParamsSchema,
+  createAndApproveSessionParamsSchema,
   denySessionParamsSchema,
   revokeSessionParamsSchema,
 } from '../validation/schemas.js';
@@ -30,6 +31,7 @@ const ACTION_PARAMS_SCHEMAS: Record<WriteAction, z.ZodSchema> = {
   update_category_ref: updateCategoryRefParamsSchema,
   create_session_request: createSessionRequestParamsSchema,
   approve_session: approveSessionParamsSchema,
+  create_and_approve_session: createAndApproveSessionParamsSchema,
   deny_session: denySessionParamsSchema,
   revoke_session: revokeSessionParamsSchema,
 };
@@ -42,6 +44,10 @@ const ACTION_SUMMARIES: Record<WriteAction, (params: Record<string, unknown>) =>
     return `Create session request for ${categories?.join(', ') ?? 'categories'}`;
   },
   approve_session: (params) => `Approve session ${params['sessionId']}`,
+  create_and_approve_session: (params) => {
+    const categories = params['requiredCategories'] as string[];
+    return `Create and approve session for ${categories?.join(', ') ?? 'categories'}`;
+  },
   deny_session: (params) => `Deny session ${params['sessionId']}`,
   revoke_session: (params) => `Revoke session ${params['sessionId']}`,
 };
