@@ -18,6 +18,45 @@
 coco Intelligence
 
 // ============================================================================
+// EVENTS
+// ============================================================================
+
+event SessionCreated:
+    topic session_id String
+    topic agent_id   String
+    field purpose    String
+
+event SessionApproved:
+    topic session_id String
+    topic agent_id   String
+    field expires_at U64
+    field uses       U64
+
+event SessionDenied:
+    topic session_id String
+    topic agent_id   String
+    field reason     String
+
+event SessionConsumed:
+    topic session_id String
+    topic agent_id   String
+    field remaining  U64
+
+event SessionRevoked:
+    topic session_id String
+    topic agent_id   String
+    field reason     String
+
+event CategoryUpdated:
+    topic category   String
+    field ref        String
+    field version    String
+    field updated_by String
+
+event CategoryRemoved:
+    topic category String
+
+// ============================================================================
 // CONSTANTS
 // ============================================================================
 
@@ -51,6 +90,7 @@ class CategoryRef:
     field Ref           String
     field SchemaVersion String
     field LastUpdated   U64
+    field UpdatedBy     String
     field Exists        Bool
 
 class SessionRecord:
@@ -92,6 +132,7 @@ class IntelligenceObject:
 state actor:
     category_refs   Map[String]CategoryRef
     sessions        Map[String]SessionRecord
+    session_ids     []String
     version         U64
     last_updated_at U64
 
@@ -134,7 +175,7 @@ function IsSubset(required []String, approved []String) -> (is_subset Bool):
 // ENDPOINT: SetCategoryRef
 // ============================================================================
 
-endpoint dynamic SetCategoryRef(category String, ref String, schema_version String, updated_at U64):
+endpoint dynamic SetCategoryRef(category String, ref String, schema_version String, updated_at U64, updated_by String):
     memory check_valid Bool
     check_valid = (valid) <- IsValidCategory(category)
     if !check_valid:
@@ -146,6 +187,7 @@ endpoint dynamic SetCategoryRef(category String, ref String, schema_version Stri
         Ref:           ref,
         SchemaVersion: schema_version,
         LastUpdated:   updated_at,
+        UpdatedBy:     updated_by,
         Exists:        true
     }
 
@@ -156,6 +198,8 @@ endpoint dynamic SetCategoryRef(category String, ref String, schema_version Stri
         ver = ver + 1
 
     mutate updated_at -> Intelligence.Sender.last_updated_at
+
+    emit CategoryUpdated(category, ref, schema_version, updated_by)
 
 // ============================================================================
 // ENDPOINT: RemoveCategoryRef
@@ -175,6 +219,7 @@ endpoint dynamic RemoveCategoryRef(category String, updated_at U64):
         Ref:           "",
         SchemaVersion: "",
         LastUpdated:   updated_at,
+        UpdatedBy:     "",
         Exists:        false
     }
 
@@ -185,6 +230,8 @@ endpoint dynamic RemoveCategoryRef(category String, updated_at U64):
         ver = ver + 1
 
     mutate updated_at -> Intelligence.Sender.last_updated_at
+
+    emit CategoryRemoved(category)
 
 // ============================================================================
 // ENDPOINT: GetCategoryRef
@@ -272,8 +319,13 @@ endpoint dynamic CreateSessionRequest(
     mutate sessions <- Intelligence.Sender.sessions:
         disperse sessions[session_id] <- session
 
+    mutate ids <- Intelligence.Sender.session_ids:
+        append(ids, session_id)
+
     mutate ver <- Intelligence.Sender.version:
         ver = ver + 1
+
+    emit SessionCreated(session_id, agent_id, purpose)
 
 // ============================================================================
 // ENDPOINT: ApproveSession
@@ -323,6 +375,8 @@ endpoint dynamic ApproveSession(
 
     mutate issued_at -> Intelligence.Sender.last_updated_at
 
+    emit SessionApproved(session_id, session.AgentId, expires_at, remaining_uses)
+
 // ============================================================================
 // ENDPOINT: DenySession
 // ============================================================================
@@ -360,13 +414,36 @@ endpoint dynamic DenySession(session_id String, denial_reason String):
     mutate ver <- Intelligence.Sender.version:
         ver = ver + 1
 
+    mutate session.IssuedAt -> Intelligence.Sender.last_updated_at
+
+    emit SessionDenied(session_id, session.AgentId, denial_reason)
+
 // ============================================================================
 // ENDPOINT: GetSession
 // ============================================================================
 
 endpoint static GetSession(actor_id Identifier, session_id String) -> (session SessionRecord):
     observe sessions <- Intelligence.Actor(actor_id).sessions:
-        gather session <- sessions[session_id]
+        if sessions[session_id]?:
+            gather session <- sessions[session_id]
+
+// ============================================================================
+// ENDPOINT: GetSessions
+// ============================================================================
+
+endpoint static GetSessions(actor_id Identifier) -> (sessions_list []SessionRecord):
+    memory result []SessionRecord
+
+    observe ids <- Intelligence.Actor(actor_id).session_ids:
+        for _, sid in ids:
+            memory s SessionRecord
+            observe sessions <- Intelligence.Actor(actor_id).sessions:
+                if sessions[sid]?:
+                    gather s <- sessions[sid]
+            if s.Exists:
+                append(result, s)
+
+    sessions_list = result
 
 // ============================================================================
 // ENDPOINT: ValidateSession
@@ -382,7 +459,8 @@ endpoint static ValidateSession(
 ) -> (result ValidationResult):
     memory session SessionRecord
     observe sessions <- Intelligence.Actor(actor_id).sessions:
-        gather session <- sessions[session_id]
+        if sessions[session_id]?:
+            gather session <- sessions[session_id]
 
     if !session.Exists:
         result = ValidationResult{Valid: false, Reason: REASON_NOT_FOUND}
@@ -509,6 +587,8 @@ endpoint dynamic ConsumeSessionUse(session_id String, current_time U64):
 
     mutate current_time -> Intelligence.Sender.last_updated_at
 
+    emit SessionConsumed(session_id, session.AgentId, new_remaining)
+
 // ============================================================================
 // ENDPOINT: RevokeSession
 // ============================================================================
@@ -545,6 +625,10 @@ endpoint dynamic RevokeSession(session_id String, revocation_reason String):
 
     mutate ver <- Intelligence.Sender.version:
         ver = ver + 1
+
+    mutate session.IssuedAt -> Intelligence.Sender.last_updated_at
+
+    emit SessionRevoked(session_id, session.AgentId, revocation_reason)
 
 // ============================================================================
 // ENDPOINT: GetIntelligenceObject
@@ -584,6 +668,23 @@ endpoint static GetIntelligenceObject(actor_id Identifier) -> (intel_obj Intelli
         append(cat_refs, payment_ref)
 
     memory active_sessions []SessionSummary
+
+    observe ids <- Intelligence.Actor(actor_id).session_ids:
+        for _, sid in ids:
+            memory s SessionRecord
+            observe sessions <- Intelligence.Actor(actor_id).sessions:
+                if sessions[sid]?:
+                    gather s <- sessions[sid]
+            if s.Exists && s.Status == STATUS_ACTIVE:
+                memory summary SessionSummary
+                summary = SessionSummary{
+                    SessionId: s.SessionId,
+                    AgentId:   s.AgentId,
+                    Status:    s.Status,
+                    Purpose:   s.Purpose,
+                    ExpiresAt: s.ExpiresAt
+                }
+                append(active_sessions, summary)
 
     intel_obj = IntelligenceObject{
         ActorId:        actor_id,

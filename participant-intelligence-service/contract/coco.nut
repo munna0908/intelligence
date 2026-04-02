@@ -36,16 +36,16 @@ test-intelligence = [
     "register robert",
 
     # --- SetCategoryRef: set all 4 categories for rahul ---
-    "invoke Intelligence.SetCategoryRef(category: \"FOOD\", ref: \"fish\", schema_version: \"1.1\", updated_at: 1773412350) as rahul",
-    "invoke Intelligence.SetCategoryRef(category: \"HEALTH\", ref: \"vitals\", schema_version: \"1.0\", updated_at: 1773412350) as rahul",
-    "invoke Intelligence.SetCategoryRef(category: \"ADDRESS\", ref: \"home\", schema_version: \"1.1\", updated_at: 1773412351) as rahul",
-    "invoke Intelligence.SetCategoryRef(category: \"PAYMENT\", ref: \"card\", schema_version: \"1.0\", updated_at: 1773412351) as rahul",
+    "invoke Intelligence.SetCategoryRef(category: \"FOOD\", ref: \"fish\", schema_version: \"1.1\", updated_at: 1773412350, updated_by: \"swiggy\") as rahul",
+    "invoke Intelligence.SetCategoryRef(category: \"HEALTH\", ref: \"vitals\", schema_version: \"1.0\", updated_at: 1773412350, updated_by: \"my diet app\") as rahul",
+    "invoke Intelligence.SetCategoryRef(category: \"ADDRESS\", ref: \"home\", schema_version: \"1.1\", updated_at: 1773412351, updated_by: \"addressbook\") as rahul",
+    "invoke Intelligence.SetCategoryRef(category: \"PAYMENT\", ref: \"card\", schema_version: \"1.0\", updated_at: 1773412351, updated_by: \"phonepe\") as rahul",
 
     # --- SetCategoryRef: set all 4 categories for robert ---
-    "invoke Intelligence.SetCategoryRef(category: \"FOOD\", ref: \"milk\", schema_version: \"1.2\", updated_at: 1773412351) as robert",
-    "invoke Intelligence.SetCategoryRef(category: \"HEALTH\", ref: \"records\", schema_version: \"1.0\", updated_at: 1773412351) as robert",
-    "invoke Intelligence.SetCategoryRef(category: \"ADDRESS\", ref: \"office\", schema_version: \"1.0\", updated_at: 1773412351) as robert",
-    "invoke Intelligence.SetCategoryRef(category: \"PAYMENT\", ref: \"bank\", schema_version: \"1.0\", updated_at: 1773412351) as robert",
+    "invoke Intelligence.SetCategoryRef(category: \"FOOD\", ref: \"milk\", schema_version: \"1.2\", updated_at: 1773412351, updated_by: \"swiggy\") as robert",
+    "invoke Intelligence.SetCategoryRef(category: \"HEALTH\", ref: \"records\", schema_version: \"1.0\", updated_at: 1773412351, updated_by: \"my diet app\") as robert",
+    "invoke Intelligence.SetCategoryRef(category: \"ADDRESS\", ref: \"office\", schema_version: \"1.0\", updated_at: 1773412351, updated_by: \"addressbook\") as robert",
+    "invoke Intelligence.SetCategoryRef(category: \"PAYMENT\", ref: \"bank\", schema_version: \"1.0\", updated_at: 1773412351, updated_by: \"phonepe\") as robert",
 
     # --- GetCategoryRef ---
     "invoke Intelligence.GetCategoryRef(actor_id: rahul, category: \"FOOD\") as X",
@@ -67,7 +67,7 @@ test-intelligence = [
     "invoke Intelligence.GetLastUpdatedAt(actor_id: robert) as X",
 
     # --- SetCategoryRef overwrite ---
-    "invoke Intelligence.SetCategoryRef(category: \"FOOD\", ref: \"sushi\", schema_version: \"1.3\", updated_at: 1773412360) as rahul",
+    "invoke Intelligence.SetCategoryRef(category: \"FOOD\", ref: \"sushi\", schema_version: \"1.3\", updated_at: 1773412360, updated_by: \"swiggy\") as rahul",
     "invoke Intelligence.GetCategoryRef(actor_id: rahul, category: \"FOOD\") as X",
     "invoke Intelligence.GetVersion(actor_id: rahul) as X",
 
@@ -81,6 +81,9 @@ test-intelligence = [
     # --- GetSession (after create, should be REQUESTED) ---
     "invoke Intelligence.GetSession(actor_id: rahul, session_id: \"sess1\") as X",
 
+    # --- GetSession for nonexistent session (should return Exists:false, not error) ---
+    "invoke Intelligence.GetSession(actor_id: rahul, session_id: \"nonexistent\") as X",
+
     # --- CreateSessionRequest duplicate (should fail) ---
     "invoke Intelligence.CreateSessionRequest(session_id: \"sess1\", agent_id: \"agent099\", purpose: \"duplicate\", approved_categories: []String{\"FOOD\"}, approved_scopes: []String{\"read\"}, requested_uses: 1, ttl_seconds: 100, approval_ref: \"dup\") as rahul",
 
@@ -89,6 +92,12 @@ test-intelligence = [
 
     # --- GetSession (after approve, should be ACTIVE) ---
     "invoke Intelligence.GetSession(actor_id: rahul, session_id: \"sess1\") as X",
+
+    # --- GetSessions (should list sess1 as ACTIVE) ---
+    "invoke Intelligence.GetSessions(actor_id: rahul) as X",
+
+    # --- GetIntelligenceObject (ActiveSessions should now include sess1) ---
+    "invoke Intelligence.GetIntelligenceObject(actor_id: rahul) as X",
 
     # --- ValidateSession (should be valid) ---
     "invoke Intelligence.ValidateSession(actor_id: rahul, session_id: \"sess1\", agent_id: \"agent007\", required_categories: []String{\"FOOD\"}, required_scopes: []String{\"read\"}, current_time: 1773412500) as X",
@@ -105,12 +114,18 @@ test-intelligence = [
     # --- GetSession (after revoke, should be REVOKED) ---
     "invoke Intelligence.GetSession(actor_id: rahul, session_id: \"sess1\") as X",
 
+    # --- GetSessions (sess1 REVOKED, no active sessions) ---
+    "invoke Intelligence.GetSessions(actor_id: rahul) as X",
+
     # --- DenySession: create a second session and deny it ---
     "invoke Intelligence.CreateSessionRequest(session_id: \"sess2\", agent_id: \"agent008\", purpose: \"health_check\", approved_categories: []String{\"HEALTH\"}, approved_scopes: []String{\"read\"}, requested_uses: 3, ttl_seconds: 1800, approval_ref: \"ref002\") as rahul",
     "invoke Intelligence.DenySession(session_id: \"sess2\", denial_reason: \"not authorized\") as rahul",
 
     # --- GetSession (after deny, should be DENIED) ---
     "invoke Intelligence.GetSession(actor_id: rahul, session_id: \"sess2\") as X",
+
+    # --- GetSessions (should list both sess1 REVOKED and sess2 DENIED) ---
+    "invoke Intelligence.GetSessions(actor_id: rahul) as X",
 ]
 
 # run scripts with with script name e.g. "coco nut run test"

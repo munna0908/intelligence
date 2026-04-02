@@ -130,7 +130,15 @@ export async function getSession(
 
   try {
     const driver = await getLogicDriver();
-    return await readSessionFromState(driver, participantId, sessionId);
+    const session = await readSessionFromState(driver, participantId, sessionId);
+    if (!session) return null;
+
+    // On-chain status never auto-transitions — compute effective status at read time
+    const now = Math.floor(Date.now() / 1000);
+    if (session.status === 'ACTIVE' && session.expiresAt > 0 && session.expiresAt < now) {
+      return { ...session, status: 'EXPIRED' as SessionStatus };
+    }
+    return session;
   } catch (error) {
     logger.error({ participantId, sessionId, error }, 'Failed to get session');
     throw error;
@@ -218,6 +226,7 @@ export async function validateSession(
       return { valid: false, reason: 'wrong_status' };
     }
 
+    logger.info({ sessionId, storedAgentId: session.agentId, requestedAgentId: agentId, match: session.agentId === agentId }, 'agent_id comparison');
     if (session.agentId !== agentId) {
       return { valid: false, reason: 'agent_mismatch' };
     }

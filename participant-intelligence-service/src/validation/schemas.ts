@@ -55,6 +55,7 @@ export const updateCategoryRefParamsSchema = z.object({
   ref: z.string().min(1, 'ref is required'),
   schemaVersion: z.string().min(1, 'schemaVersion is required'),
   updatedAt: z.number().int().positive(),
+  updatedBy: z.string().min(1, 'updatedBy is required'),
 });
 
 export const createSessionRequestParamsSchema = z.object({

@@ -72,11 +72,13 @@ class MockStore {
           ref: 'bafy_food_cid_001',
           schemaVersion: '1.0',
           updatedAt: now - 3600,
+          updatedBy: 'swiggy',
         },
         HEALTH: {
           ref: 'bafy_health_cid_001',
           schemaVersion: '1.0',
           updatedAt: now - 7200,
+          updatedBy: 'my diet app',
         },
       },
       sessions: [
@@ -105,11 +107,13 @@ class MockStore {
           ref: 'bafy_address_cid_002',
           schemaVersion: '1.0',
           updatedAt: now - 1800,
+          updatedBy: 'addressbook',
         },
         PAYMENT: {
           ref: 'bafy_payment_cid_002',
           schemaVersion: '1.0',
           updatedAt: now - 1800,
+          updatedBy: 'phonepe',
         },
       },
       sessions: [],

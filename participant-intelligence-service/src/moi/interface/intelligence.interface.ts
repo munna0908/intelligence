@@ -22,6 +22,7 @@ interface ContractCategoryRef {
   Ref: string;
   SchemaVersion: string;
   LastUpdated: bigint | number;
+  UpdatedBy: string;
   Exists: boolean;
 }
 
@@ -72,6 +73,7 @@ function mapCategoryRef(ref: ContractCategoryRef): CategoryRef {
     ref: ref.Ref,
     schemaVersion: ref.SchemaVersion,
     updatedAt: toNumber(ref.LastUpdated),
+    updatedBy: ref.UpdatedBy,
   };
 }
 

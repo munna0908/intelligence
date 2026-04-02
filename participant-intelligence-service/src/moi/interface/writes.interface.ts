@@ -173,6 +173,7 @@ function buildArgsArray(method: string, params: Record<string, unknown>): unknow
         params['ref'],
         params['schemaVersion'],
         BigInt(params['updatedAt'] as number),
+        params['updatedBy'],
       ];
 
     case 'RemoveCategoryRef':

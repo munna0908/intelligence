@@ -250,7 +250,7 @@
     {
       "ptr": 30,
       "deps": [
-        34
+        36
       ],
       "kind": "typedef",
       "data": "[]class.CategoryRef"
@@ -258,18 +258,18 @@
     {
       "ptr": 31,
       "deps": [
-        34
+        37
       ],
       "kind": "typedef",
-      "data": "map[string]class.CategoryRef"
+      "data": "[]class.SessionRecord"
     },
     {
       "ptr": 32,
       "deps": [
-        35
+        36
       ],
       "kind": "typedef",
-      "data": "map[string]class.SessionRecord"
+      "data": "map[string]class.CategoryRef"
     },
     {
       "ptr": 33,
@@ -277,10 +277,23 @@
         37
       ],
       "kind": "typedef",
-      "data": "[]class.SessionSummary"
+      "data": "map[string]class.SessionRecord"
     },
     {
       "ptr": 34,
+      "kind": "typedef",
+      "data": "[]string"
+    },
+    {
+      "ptr": 35,
+      "deps": [
+        39
+      ],
+      "kind": "typedef",
+      "data": "[]class.SessionSummary"
+    },
+    {
+      "ptr": 36,
       "kind": "class",
       "data": {
         "name": "CategoryRef",
@@ -307,6 +320,11 @@
           },
           {
             "slot": 4,
+            "label": "UpdatedBy",
+            "type": "string"
+          },
+          {
+            "slot": 5,
             "label": "Exists",
             "type": "bool"
           }
@@ -315,7 +333,7 @@
       }
     },
     {
-      "ptr": 35,
+      "ptr": 37,
       "kind": "class",
       "data": {
         "name": "SessionRecord",
@@ -385,7 +403,7 @@
       }
     },
     {
-      "ptr": 36,
+      "ptr": 38,
       "kind": "class",
       "data": {
         "name": "ValidationResult",
@@ -405,7 +423,7 @@
       }
     },
     {
-      "ptr": 37,
+      "ptr": 39,
       "kind": "class",
       "data": {
         "name": "SessionSummary",
@@ -440,10 +458,10 @@
       }
     },
     {
-      "ptr": 38,
+      "ptr": 40,
       "deps": [
-        34,
-        37
+        36,
+        39
       ],
       "kind": "class",
       "data": {
@@ -479,10 +497,185 @@
       }
     },
     {
-      "ptr": 39,
+      "ptr": 41,
+      "kind": "event",
+      "data": {
+        "name": "SessionCreated",
+        "topics": 2,
+        "fields": [
+          {
+            "slot": 0,
+            "label": "session_id",
+            "type": "string"
+          },
+          {
+            "slot": 1,
+            "label": "agent_id",
+            "type": "string"
+          },
+          {
+            "slot": 2,
+            "label": "purpose",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 42,
+      "kind": "event",
+      "data": {
+        "name": "SessionApproved",
+        "topics": 2,
+        "fields": [
+          {
+            "slot": 0,
+            "label": "session_id",
+            "type": "string"
+          },
+          {
+            "slot": 1,
+            "label": "agent_id",
+            "type": "string"
+          },
+          {
+            "slot": 2,
+            "label": "expires_at",
+            "type": "u64"
+          },
+          {
+            "slot": 3,
+            "label": "uses",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 43,
+      "kind": "event",
+      "data": {
+        "name": "SessionDenied",
+        "topics": 2,
+        "fields": [
+          {
+            "slot": 0,
+            "label": "session_id",
+            "type": "string"
+          },
+          {
+            "slot": 1,
+            "label": "agent_id",
+            "type": "string"
+          },
+          {
+            "slot": 2,
+            "label": "reason",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 44,
+      "kind": "event",
+      "data": {
+        "name": "SessionConsumed",
+        "topics": 2,
+        "fields": [
+          {
+            "slot": 0,
+            "label": "session_id",
+            "type": "string"
+          },
+          {
+            "slot": 1,
+            "label": "agent_id",
+            "type": "string"
+          },
+          {
+            "slot": 2,
+            "label": "remaining",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 45,
+      "kind": "event",
+      "data": {
+        "name": "SessionRevoked",
+        "topics": 2,
+        "fields": [
+          {
+            "slot": 0,
+            "label": "session_id",
+            "type": "string"
+          },
+          {
+            "slot": 1,
+            "label": "agent_id",
+            "type": "string"
+          },
+          {
+            "slot": 2,
+            "label": "reason",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 46,
+      "kind": "event",
+      "data": {
+        "name": "CategoryUpdated",
+        "topics": 1,
+        "fields": [
+          {
+            "slot": 0,
+            "label": "category",
+            "type": "string"
+          },
+          {
+            "slot": 1,
+            "label": "ref",
+            "type": "string"
+          },
+          {
+            "slot": 2,
+            "label": "version",
+            "type": "string"
+          },
+          {
+            "slot": 3,
+            "label": "updated_by",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 47,
+      "kind": "event",
+      "data": {
+        "name": "CategoryRemoved",
+        "topics": 1,
+        "fields": [
+          {
+            "slot": 0,
+            "label": "category",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 48,
       "deps": [
-        34,
-        35
+        36,
+        37
       ],
       "kind": "state",
       "data": {
@@ -500,11 +693,16 @@
           },
           {
             "slot": 2,
+            "label": "session_ids",
+            "type": "[]string"
+          },
+          {
+            "slot": 3,
             "label": "version",
             "type": "u64"
           },
           {
-            "slot": 3,
+            "slot": 4,
             "label": "last_updated_at",
             "type": "u64"
           }
@@ -512,7 +710,7 @@
       }
     },
     {
-      "ptr": 40,
+      "ptr": 49,
       "kind": "callable",
       "data": {
         "name": "IsValidCategory",
@@ -587,7 +785,7 @@
       }
     },
     {
-      "ptr": 41,
+      "ptr": 50,
       "kind": "callable",
       "data": {
         "name": "ContainsString",
@@ -646,9 +844,9 @@
       }
     },
     {
-      "ptr": 42,
+      "ptr": 51,
       "deps": [
-        41
+        50
       ],
       "kind": "callable",
       "data": {
@@ -693,7 +891,7 @@
             "OBTAIN $7 &1",
             "SETFLD $6 &0 $7",
             "SETFLD $6 &1 $3",
-            "LDPTR1 $7 0x29",
+            "LDPTR1 $7 0x32",
             "CALLC $6 $7 $6",
             "GETFLD $6 $6 &0",
             "COPY $5 $6",
@@ -714,12 +912,13 @@
       }
     },
     {
-      "ptr": 43,
+      "ptr": 52,
       "deps": [
         18,
-        34,
-        40,
-        39
+        36,
+        46,
+        49,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -746,6 +945,11 @@
             "slot": 3,
             "label": "updated_at",
             "type": "u64"
+          },
+          {
+            "slot": 4,
+            "label": "updated_by",
+            "type": "string"
           }
         ],
         "returns": [],
@@ -755,7 +959,7 @@
             "CARGS $1",
             "OBTAIN $2 &0",
             "SETFLD $1 &0 $2",
-            "LDPTR1 $3 0x28",
+            "LDPTR1 $3 0x31",
             "CALLC $1 $3 $1",
             "GETFLD $1 $1 &0",
             "COPY $0 $1",
@@ -765,50 +969,63 @@
             "LMAKE $0 $0",
             "THROW $0",
             "DEST",
-            "LDPTR1 $0 0x22",
+            "LDPTR1 $0 0x24",
             "MAKE $0 $0",
-            "LDPTR1 $1 0x22",
+            "LDPTR1 $1 0x24",
             "MAKE $1 $1",
             "SETFLD $1 &0 $2",
             "OBTAIN $3 &1",
             "SETFLD $1 &1 $3",
-            "OBTAIN $3 &2",
-            "SETFLD $1 &2 $3",
-            "OBTAIN $3 &3",
-            "SETFLD $1 &3 $3",
-            "PMAKE $4 &1",
-            "NOT $4 $4",
-            "SETFLD $1 &4 $4",
+            "OBTAIN $4 &2",
+            "SETFLD $1 &2 $4",
+            "OBTAIN $5 &3",
+            "SETFLD $1 &3 $5",
+            "OBTAIN $6 &4",
+            "SETFLD $1 &4 $6",
+            "PMAKE $7 &1",
+            "NOT $7 $7",
+            "SETFLD $1 &5 $7",
             "COPY $0 $1",
             "ORIGIN $1",
-            "ALOAD $4 $1 &0",
-            "GENKEY $5 $4 $2",
-            "GENKEY $5 $4 $2",
-            "DISPER $5 $0",
-            "SETKEY $4 $2 $5",
-            "STORE $4",
-            "ORIGIN $0",
-            "ALOAD $1 $0 &2",
-            "GATHER $2 $1",
-            "INCR $2",
-            "DISPER $1 $2",
-            "STORE $1",
+            "ALOAD $7 $1 &0",
+            "GENKEY $8 $7 $2",
+            "GENKEY $8 $7 $2",
+            "DISPER $8 $0",
+            "SETKEY $7 $2 $8",
+            "STORE $7",
             "ORIGIN $0",
             "ALOAD $1 $0 &3",
-            "DISPER $1 $3",
-            "STORE $1"
+            "GATHER $7 $1",
+            "INCR $7",
+            "DISPER $1 $7",
+            "STORE $1",
+            "ORIGIN $0",
+            "ALOAD $1 $0 &4",
+            "DISPER $1 $5",
+            "STORE $1",
+            "CARGS $0",
+            "SETFLD $0 &0 $2",
+            "SETFLD $0 &1 $3",
+            "SETFLD $0 &2 $4",
+            "SETFLD $0 &3 $6",
+            "LDPTR1 $1 0x2e",
+            "EVMAKE $0 $1 $0",
+            "LOGIC $1",
+            "ID $1 $1",
+            "EMIT $1 $0"
           ]
         },
         "catches": []
       }
     },
     {
-      "ptr": 44,
+      "ptr": 53,
       "deps": [
         19,
         20,
-        34,
-        39
+        36,
+        47,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -830,7 +1047,7 @@
         "returns": [],
         "executes": {
           "asm": [
-            "LDPTR1 $0 0x22",
+            "LDPTR1 $0 0x24",
             "MAKE $0 $0",
             "ORIGIN $1",
             "ALOAD $2 $1 &0",
@@ -838,16 +1055,16 @@
             "GETKEY $3 $2 $3",
             "GATHER $0 $3",
             "DUMP $2",
-            "GETFLD $0 $0 &4",
+            "GETFLD $0 $0 &5",
             "LDPTR1 $1 0xe",
             "JUMPI $1 $0",
             "LDPTR1 $0 0x13",
             "LMAKE $0 $0",
             "THROW $0",
             "DEST",
-            "LDPTR1 $0 0x22",
+            "LDPTR1 $0 0x24",
             "MAKE $0 $0",
-            "LDPTR1 $1 0x22",
+            "LDPTR1 $1 0x24",
             "MAKE $1 $1",
             "OBTAIN $2 &0",
             "SETFLD $1 &0 $2",
@@ -859,8 +1076,11 @@
             "SETFLD $1 &2 $3",
             "OBTAIN $3 &1",
             "SETFLD $1 &3 $3",
-            "PMAKE $4 &1",
+            "LDPTR1 $4 0x14",
+            "LMAKE $4 $4",
             "SETFLD $1 &4 $4",
+            "PMAKE $4 &1",
+            "SETFLD $1 &5 $4",
             "COPY $0 $1",
             "ORIGIN $1",
             "ALOAD $4 $1 &0",
@@ -870,25 +1090,32 @@
             "SETKEY $4 $2 $5",
             "STORE $4",
             "ORIGIN $0",
-            "ALOAD $1 $0 &2",
-            "GATHER $2 $1",
-            "INCR $2",
-            "DISPER $1 $2",
+            "ALOAD $1 $0 &3",
+            "GATHER $4 $1",
+            "INCR $4",
+            "DISPER $1 $4",
             "STORE $1",
             "ORIGIN $0",
-            "ALOAD $1 $0 &3",
+            "ALOAD $1 $0 &4",
             "DISPER $1 $3",
-            "STORE $1"
+            "STORE $1",
+            "CARGS $0",
+            "SETFLD $0 &0 $2",
+            "LDPTR1 $1 0x2f",
+            "EVMAKE $0 $1 $0",
+            "LOGIC $1",
+            "ID $1 $1",
+            "EMIT $1 $0"
           ]
         },
         "catches": []
       }
     },
     {
-      "ptr": 45,
+      "ptr": 54,
       "deps": [
-        34,
-        39
+        36,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -916,7 +1143,7 @@
         ],
         "executes": {
           "asm": [
-            "LDPTR1 $0 0x22",
+            "LDPTR1 $0 0x24",
             "MAKE $0 $0",
             "OBTAIN $1 &0",
             "ALOAD $2 $1 &0",
@@ -931,11 +1158,11 @@
       }
     },
     {
-      "ptr": 46,
+      "ptr": 55,
       "deps": [
         30,
-        34,
-        39
+        36,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -963,7 +1190,7 @@
             "PMAKE $1 &5",
             "LDPTR1 $2 0x1e",
             "VMAKE $1 $2 $1",
-            "LDPTR1 $2 0x22",
+            "LDPTR1 $2 0x24",
             "MAKE $2 $2",
             "OBTAIN $3 &0",
             "ALOAD $4 $3 &0",
@@ -972,13 +1199,13 @@
             "GETKEY $5 $4 $5",
             "GATHER $2 $5",
             "DUMP $4",
-            "GETFLD $3 $2 &4",
+            "GETFLD $3 $2 &5",
             "NOT $3 $3",
             "LDPTR1 $4 0x13",
             "JUMPI $4 $3",
             "APPEND $1 $2",
             "DEST",
-            "LDPTR1 $2 0x22",
+            "LDPTR1 $2 0x24",
             "MAKE $2 $2",
             "OBTAIN $3 &0",
             "ALOAD $4 $3 &0",
@@ -987,13 +1214,13 @@
             "GETKEY $5 $4 $5",
             "GATHER $2 $5",
             "DUMP $4",
-            "GETFLD $3 $2 &4",
+            "GETFLD $3 $2 &5",
             "NOT $3 $3",
             "LDPTR1 $4 0x22",
             "JUMPI $4 $3",
             "APPEND $1 $2",
             "DEST",
-            "LDPTR1 $2 0x22",
+            "LDPTR1 $2 0x24",
             "MAKE $2 $2",
             "OBTAIN $3 &0",
             "ALOAD $4 $3 &0",
@@ -1002,13 +1229,13 @@
             "GETKEY $5 $4 $5",
             "GATHER $2 $5",
             "DUMP $4",
-            "GETFLD $3 $2 &4",
+            "GETFLD $3 $2 &5",
             "NOT $3 $3",
             "LDPTR1 $4 0x31",
             "JUMPI $4 $3",
             "APPEND $1 $2",
             "DEST",
-            "LDPTR1 $2 0x22",
+            "LDPTR1 $2 0x24",
             "MAKE $2 $2",
             "OBTAIN $3 &0",
             "ALOAD $4 $3 &0",
@@ -1017,7 +1244,7 @@
             "GETKEY $5 $4 $5",
             "GATHER $2 $5",
             "DUMP $4",
-            "GETFLD $3 $2 &4",
+            "GETFLD $3 $2 &5",
             "NOT $3 $3",
             "LDPTR1 $4 0x40",
             "JUMPI $4 $3",
@@ -1031,14 +1258,15 @@
       }
     },
     {
-      "ptr": 47,
+      "ptr": 56,
       "deps": [
         21,
         22,
         20,
-        35,
-        40,
-        39
+        37,
+        41,
+        49,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -1120,7 +1348,7 @@
             "PMAKE $5 &1",
             "CARGS $6",
             "SETFLD $6 &0 $3",
-            "LDPTR1 $7 0x28",
+            "LDPTR1 $7 0x31",
             "CALLC $6 $7 $6",
             "GETFLD $6 $6 &0",
             "COPY $5 $6",
@@ -1135,19 +1363,19 @@
             "LDPTR1 $4 0x15",
             "JUMP $4",
             "DEST",
-            "LDPTR1 $1 0x23",
+            "LDPTR1 $1 0x25",
             "MAKE $1 $1",
-            "LDPTR1 $2 0x23",
+            "LDPTR1 $2 0x25",
             "MAKE $2 $2",
             "OBTAIN $3 &0",
             "SETFLD $2 &0 $3",
             "OBTAIN $4 &1",
             "SETFLD $2 &1 $4",
-            "LDPTR1 $4 0x4",
-            "LMAKE $4 $4",
-            "SETFLD $2 &2 $4",
-            "OBTAIN $4 &2",
-            "SETFLD $2 &3 $4",
+            "LDPTR1 $5 0x4",
+            "LMAKE $5 $5",
+            "SETFLD $2 &2 $5",
+            "OBTAIN $5 &2",
+            "SETFLD $2 &3 $5",
             "SETFLD $2 &4 $0",
             "OBTAIN $0 &4",
             "SETFLD $2 &5 $0",
@@ -1168,31 +1396,45 @@
             "COPY $1 $2",
             "ORIGIN $0",
             "ALOAD $2 $0 &1",
-            "GENKEY $4 $2 $3",
-            "GENKEY $4 $2 $3",
-            "DISPER $4 $1",
-            "SETKEY $2 $3 $4",
+            "GENKEY $6 $2 $3",
+            "GENKEY $6 $2 $3",
+            "DISPER $6 $1",
+            "SETKEY $2 $3 $6",
             "STORE $2",
             "ORIGIN $0",
             "ALOAD $1 $0 &2",
+            "APPEND $1 $3",
+            "STORE $1",
+            "ORIGIN $0",
+            "ALOAD $1 $0 &3",
             "GATHER $2 $1",
             "INCR $2",
             "DISPER $1 $2",
-            "STORE $1"
+            "STORE $1",
+            "CARGS $0",
+            "SETFLD $0 &0 $3",
+            "SETFLD $0 &1 $4",
+            "SETFLD $0 &2 $5",
+            "LDPTR1 $1 0x29",
+            "EVMAKE $0 $1 $0",
+            "LOGIC $1",
+            "ID $1 $1",
+            "EMIT $1 $0"
           ]
         },
         "catches": []
       }
     },
     {
-      "ptr": 48,
+      "ptr": 57,
       "deps": [
         23,
         24,
         25,
         20,
-        35,
-        39
+        37,
+        42,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -1229,7 +1471,7 @@
         "returns": [],
         "executes": {
           "asm": [
-            "LDPTR1 $0 0x23",
+            "LDPTR1 $0 0x25",
             "MAKE $0 $0",
             "ORIGIN $1",
             "ALOAD $2 $1 &1",
@@ -1263,9 +1505,9 @@
             "LMAKE $3 $3",
             "THROW $3",
             "DEST",
-            "LDPTR1 $3 0x23",
+            "LDPTR1 $3 0x25",
             "MAKE $3 $3",
-            "LDPTR1 $4 0x23",
+            "LDPTR1 $4 0x25",
             "MAKE $4 $4",
             "GETFLD $5 $0 &0",
             "SETFLD $4 &0 $5",
@@ -1278,51 +1520,64 @@
             "SETFLD $4 &3 $5",
             "GETFLD $5 $0 &4",
             "SETFLD $4 &4 $5",
-            "GETFLD $0 $0 &5",
-            "SETFLD $4 &5 $0",
+            "GETFLD $5 $0 &5",
+            "SETFLD $4 &5 $5",
             "SETFLD $4 &6 $2",
             "SETFLD $4 &7 $1",
-            "OBTAIN $0 &3",
-            "SETFLD $4 &8 $0",
-            "OBTAIN $0 &4",
-            "SETFLD $4 &9 $0",
-            "LDPTR1 $0 0x14",
-            "LMAKE $0 $0",
-            "SETFLD $4 &a $0",
-            "PMAKE $0 &1",
-            "NOT $0 $0",
-            "SETFLD $4 &b $0",
+            "OBTAIN $5 &3",
+            "SETFLD $4 &8 $5",
+            "OBTAIN $6 &4",
+            "SETFLD $4 &9 $6",
+            "LDPTR1 $6 0x14",
+            "LMAKE $6 $6",
+            "SETFLD $4 &a $6",
+            "PMAKE $6 &1",
+            "NOT $6 $6",
+            "SETFLD $4 &b $6",
             "COPY $3 $4",
-            "ORIGIN $0",
-            "ALOAD $1 $0 &1",
-            "OBTAIN $4 &0",
-            "GENKEY $5 $1 $4",
-            "GENKEY $5 $1 $4",
-            "DISPER $5 $3",
-            "SETKEY $1 $4 $5",
-            "STORE $1",
-            "ORIGIN $0",
-            "ALOAD $1 $0 &2",
-            "GATHER $3 $1",
-            "INCR $3",
-            "DISPER $1 $3",
-            "STORE $1",
-            "ORIGIN $0",
-            "ALOAD $1 $0 &3",
-            "DISPER $1 $2",
-            "STORE $1"
+            "ORIGIN $4",
+            "ALOAD $6 $4 &1",
+            "OBTAIN $7 &0",
+            "GENKEY $8 $6 $7",
+            "GENKEY $8 $6 $7",
+            "DISPER $8 $3",
+            "SETKEY $6 $7 $8",
+            "STORE $6",
+            "ORIGIN $3",
+            "ALOAD $4 $3 &3",
+            "GATHER $6 $4",
+            "INCR $6",
+            "DISPER $4 $6",
+            "STORE $4",
+            "ORIGIN $3",
+            "ALOAD $4 $3 &4",
+            "DISPER $4 $2",
+            "STORE $4",
+            "CARGS $2",
+            "OBTAIN $3 &0",
+            "SETFLD $2 &0 $3",
+            "GETFLD $0 $0 &1",
+            "SETFLD $2 &1 $0",
+            "SETFLD $2 &2 $1",
+            "SETFLD $2 &3 $5",
+            "LDPTR1 $0 0x2a",
+            "EVMAKE $0 $0 $2",
+            "LOGIC $1",
+            "ID $1 $1",
+            "EMIT $1 $0"
           ]
         },
         "catches": []
       }
     },
     {
-      "ptr": 49,
+      "ptr": 58,
       "deps": [
         23,
         24,
-        35,
-        39
+        37,
+        43,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -1344,7 +1599,7 @@
         "returns": [],
         "executes": {
           "asm": [
-            "LDPTR1 $0 0x23",
+            "LDPTR1 $0 0x25",
             "MAKE $0 $0",
             "ORIGIN $1",
             "ALOAD $2 $1 &1",
@@ -1369,9 +1624,9 @@
             "LMAKE $1 $1",
             "THROW $1",
             "DEST",
-            "LDPTR1 $1 0x23",
+            "LDPTR1 $1 0x25",
             "MAKE $1 $1",
-            "LDPTR1 $2 0x23",
+            "LDPTR1 $2 0x25",
             "MAKE $2 $2",
             "GETFLD $3 $0 &0",
             "SETFLD $2 &0 $3",
@@ -1392,38 +1647,54 @@
             "SETFLD $2 &7 $3",
             "GETFLD $3 $0 &8",
             "SETFLD $2 &8 $3",
-            "GETFLD $0 $0 &9",
-            "SETFLD $2 &9 $0",
-            "OBTAIN $0 &1",
-            "SETFLD $2 &a $0",
-            "PMAKE $0 &1",
-            "NOT $0 $0",
-            "SETFLD $2 &b $0",
+            "GETFLD $3 $0 &9",
+            "SETFLD $2 &9 $3",
+            "OBTAIN $3 &1",
+            "SETFLD $2 &a $3",
+            "PMAKE $4 &1",
+            "NOT $4 $4",
+            "SETFLD $2 &b $4",
             "COPY $1 $2",
-            "ORIGIN $0",
-            "ALOAD $2 $0 &1",
-            "OBTAIN $3 &0",
-            "GENKEY $4 $2 $3",
-            "GENKEY $4 $2 $3",
-            "DISPER $4 $1",
-            "SETKEY $2 $3 $4",
+            "ORIGIN $2",
+            "ALOAD $4 $2 &1",
+            "OBTAIN $5 &0",
+            "GENKEY $6 $4 $5",
+            "GENKEY $6 $4 $5",
+            "DISPER $6 $1",
+            "SETKEY $4 $5 $6",
+            "STORE $4",
+            "ORIGIN $1",
+            "ALOAD $2 $1 &3",
+            "GATHER $4 $2",
+            "INCR $4",
+            "DISPER $2 $4",
             "STORE $2",
-            "ORIGIN $0",
-            "ALOAD $1 $0 &2",
-            "GATHER $2 $1",
-            "INCR $2",
-            "DISPER $1 $2",
-            "STORE $1"
+            "ORIGIN $1",
+            "ALOAD $2 $1 &4",
+            "GETFLD $4 $0 &6",
+            "DISPER $2 $4",
+            "STORE $2",
+            "CARGS $1",
+            "OBTAIN $2 &0",
+            "SETFLD $1 &0 $2",
+            "GETFLD $0 $0 &1",
+            "SETFLD $1 &1 $0",
+            "SETFLD $1 &2 $3",
+            "LDPTR1 $0 0x2b",
+            "EVMAKE $0 $0 $1",
+            "LOGIC $1",
+            "ID $1 $1",
+            "EMIT $1 $0"
           ]
         },
         "catches": []
       }
     },
     {
-      "ptr": 50,
+      "ptr": 59,
       "deps": [
-        35,
-        39
+        37,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -1451,13 +1722,18 @@
         ],
         "executes": {
           "asm": [
-            "LDPTR1 $0 0x23",
+            "LDPTR1 $0 0x25",
             "MAKE $0 $0",
             "OBTAIN $1 &0",
             "ALOAD $2 $1 &1",
             "OBTAIN $3 &1",
+            "HASKEY $4 $2 $3",
+            "NOT $4 $4",
+            "LDPTR1 $5 0xb",
+            "JUMPI $5 $4",
             "GETKEY $3 $2 $3",
             "GATHER $0 $3",
+            "DEST",
             "DUMP $2",
             "YIELD $0 &0"
           ]
@@ -1466,11 +1742,84 @@
       }
     },
     {
-      "ptr": 51,
+      "ptr": 60,
       "deps": [
-        36,
-        42,
-        39
+        31,
+        37,
+        48
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "GetSessions",
+        "mode": "static",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "actor_id",
+            "type": "identifier"
+          }
+        ],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "sessions_list",
+            "type": "[]class.SessionRecord"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "LDPTR1 $0 0x1f",
+            "MAKE $0 $0",
+            "PMAKE $1 &5",
+            "LDPTR1 $2 0x1f",
+            "VMAKE $1 $2 $1",
+            "OBTAIN $2 &0",
+            "ALOAD $3 $2 &2",
+            "PMAKE $4 &5",
+            "SIZE $5 $3",
+            "DEST",
+            "LT $6 $4 $5",
+            "NOT $6 $6",
+            "LDPTR1 $7 0x24",
+            "JUMPI $7 $6",
+            "GETIDX $6 $3 $4",
+            "LDPTR1 $8 0x25",
+            "MAKE $8 $8",
+            "ALOAD $9 $2 &1",
+            "HASKEY $a $9 $6",
+            "NOT $a $a",
+            "LDPTR1 $b 0x18",
+            "JUMPI $b $a",
+            "GETKEY $a $9 $6",
+            "GATHER $8 $a",
+            "DEST",
+            "DUMP $9",
+            "GETFLD $9 $8 &b",
+            "NOT $9 $9",
+            "LDPTR1 $a 0x1f",
+            "JUMPI $a $9",
+            "APPEND $1 $8",
+            "DEST",
+            "DEST",
+            "INCR $4",
+            "LDPTR1 $7 0x9",
+            "JUMP $7",
+            "DEST",
+            "DUMP $3",
+            "COPY $0 $1",
+            "YIELD $0 &0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 61,
+      "deps": [
+        38,
+        51,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -1518,20 +1867,25 @@
         ],
         "executes": {
           "asm": [
-            "LDPTR1 $0 0x24",
+            "LDPTR1 $0 0x26",
             "MAKE $0 $0",
-            "LDPTR1 $1 0x23",
+            "LDPTR1 $1 0x25",
             "MAKE $1 $1",
             "OBTAIN $2 &0",
             "ALOAD $3 $2 &1",
             "OBTAIN $4 &1",
+            "HASKEY $5 $3 $4",
+            "NOT $5 $5",
+            "LDPTR1 $6 0xd",
+            "JUMPI $6 $5",
             "GETKEY $4 $3 $4",
             "GATHER $1 $4",
+            "DEST",
             "DUMP $3",
             "GETFLD $2 $1 &b",
-            "LDPTR1 $3 0x17",
+            "LDPTR1 $3 0x1c",
             "JUMPI $3 $2",
-            "LDPTR1 $2 0x24",
+            "LDPTR1 $2 0x26",
             "MAKE $2 $2",
             "PMAKE $3 &1",
             "SETFLD $2 &0 $3",
@@ -1546,9 +1900,9 @@
             "LDPTR1 $3 0x5",
             "LMAKE $3 $3",
             "EQ $2 $2 $3",
-            "LDPTR1 $3 0x28",
+            "LDPTR1 $3 0x2d",
             "JUMPI $3 $2",
-            "LDPTR1 $2 0x24",
+            "LDPTR1 $2 0x26",
             "MAKE $2 $2",
             "PMAKE $3 &1",
             "SETFLD $2 &0 $3",
@@ -1562,9 +1916,9 @@
             "GETFLD $2 $1 &1",
             "OBTAIN $3 &2",
             "EQ $2 $2 $3",
-            "LDPTR1 $3 0x38",
+            "LDPTR1 $3 0x3d",
             "JUMPI $3 $2",
-            "LDPTR1 $2 0x24",
+            "LDPTR1 $2 0x26",
             "MAKE $2 $2",
             "PMAKE $3 &1",
             "SETFLD $2 &0 $3",
@@ -1579,9 +1933,9 @@
             "GETFLD $3 $1 &7",
             "GT $2 $2 $3",
             "NOT $2 $2",
-            "LDPTR1 $3 0x49",
+            "LDPTR1 $3 0x4e",
             "JUMPI $3 $2",
-            "LDPTR1 $2 0x24",
+            "LDPTR1 $2 0x26",
             "MAKE $2 $2",
             "PMAKE $3 &1",
             "SETFLD $2 &0 $3",
@@ -1596,9 +1950,9 @@
             "PMAKE $3 &5",
             "EQ $2 $2 $3",
             "NOT $2 $2",
-            "LDPTR1 $3 0x5a",
+            "LDPTR1 $3 0x5f",
             "JUMPI $3 $2",
-            "LDPTR1 $2 0x24",
+            "LDPTR1 $2 0x26",
             "MAKE $2 $2",
             "PMAKE $3 &1",
             "SETFLD $2 &0 $3",
@@ -1615,13 +1969,13 @@
             "SETFLD $3 &0 $4",
             "GETFLD $4 $1 &4",
             "SETFLD $3 &1 $4",
-            "LDPTR1 $4 0x2a",
+            "LDPTR1 $4 0x33",
             "CALLC $3 $4 $3",
             "GETFLD $3 $3 &0",
             "COPY $2 $3",
-            "LDPTR1 $3 0x71",
+            "LDPTR1 $3 0x76",
             "JUMPI $3 $2",
-            "LDPTR1 $2 0x24",
+            "LDPTR1 $2 0x26",
             "MAKE $2 $2",
             "PMAKE $3 &1",
             "SETFLD $2 &0 $3",
@@ -1638,15 +1992,15 @@
             "SETFLD $3 &0 $4",
             "GETFLD $1 $1 &5",
             "SETFLD $3 &1 $1",
-            "LDPTR1 $1 0x2a",
+            "LDPTR1 $1 0x33",
             "CALLC $1 $1 $3",
             "GETFLD $1 $1 &0",
             "COPY $2 $1",
             "NOT $1 $2",
             "NOT $1 $1",
-            "LDPTR1 $2 0x8a",
+            "LDPTR1 $2 0x8f",
             "JUMPI $2 $1",
-            "LDPTR1 $1 0x24",
+            "LDPTR1 $1 0x26",
             "MAKE $1 $1",
             "PMAKE $2 &1",
             "SETFLD $1 &0 $2",
@@ -1657,7 +2011,7 @@
             "YIELD $0 &0",
             "TERM",
             "DEST",
-            "LDPTR1 $1 0x24",
+            "LDPTR1 $1 0x26",
             "MAKE $1 $1",
             "PMAKE $2 &1",
             "NOT $2 $2",
@@ -1673,15 +2027,16 @@
       }
     },
     {
-      "ptr": 52,
+      "ptr": 62,
       "deps": [
         23,
         20,
         26,
         27,
         28,
-        35,
-        39
+        37,
+        44,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -1703,7 +2058,7 @@
         "returns": [],
         "executes": {
           "asm": [
-            "LDPTR1 $0 0x23",
+            "LDPTR1 $0 0x25",
             "MAKE $0 $0",
             "ORIGIN $1",
             "ALOAD $2 $1 &1",
@@ -1724,9 +2079,9 @@
             "NOT $2 $2",
             "LDPTR1 $3 0x46",
             "JUMPI $3 $2",
-            "LDPTR1 $2 0x23",
+            "LDPTR1 $2 0x25",
             "MAKE $2 $2",
-            "LDPTR1 $3 0x23",
+            "LDPTR1 $3 0x25",
             "MAKE $3 $3",
             "GETFLD $4 $0 &0",
             "SETFLD $3 &0 $4",
@@ -1765,7 +2120,7 @@
             "SETKEY $4 $5 $6",
             "STORE $4",
             "ORIGIN $2",
-            "ALOAD $3 $2 &2",
+            "ALOAD $3 $2 &3",
             "GATHER $4 $3",
             "INCR $4",
             "DISPER $3 $4",
@@ -1790,9 +2145,9 @@
             "NOT $2 $2",
             "LDPTR1 $4 0x88",
             "JUMPI $4 $2",
-            "LDPTR1 $2 0x23",
+            "LDPTR1 $2 0x25",
             "MAKE $2 $2",
-            "LDPTR1 $4 0x23",
+            "LDPTR1 $4 0x25",
             "MAKE $4 $4",
             "GETFLD $5 $0 &0",
             "SETFLD $4 &0 $5",
@@ -1831,7 +2186,7 @@
             "SETKEY $5 $6 $7",
             "STORE $5",
             "ORIGIN $2",
-            "ALOAD $3 $2 &2",
+            "ALOAD $3 $2 &3",
             "GATHER $4 $3",
             "INCR $4",
             "DISPER $3 $4",
@@ -1859,9 +2214,9 @@
             "LMAKE $5 $5",
             "COPY $4 $5",
             "DEST",
-            "LDPTR1 $5 0x23",
+            "LDPTR1 $5 0x25",
             "MAKE $5 $5",
-            "LDPTR1 $6 0x23",
+            "LDPTR1 $6 0x25",
             "MAKE $6 $6",
             "GETFLD $7 $0 &0",
             "SETFLD $6 &0 $7",
@@ -1879,45 +2234,57 @@
             "GETFLD $4 $0 &7",
             "SETFLD $6 &7 $4",
             "SETFLD $6 &8 $2",
-            "GETFLD $0 $0 &9",
-            "SETFLD $6 &9 $0",
-            "LDPTR1 $0 0x14",
-            "LMAKE $0 $0",
-            "SETFLD $6 &a $0",
-            "PMAKE $0 &1",
-            "NOT $0 $0",
-            "SETFLD $6 &b $0",
+            "GETFLD $4 $0 &9",
+            "SETFLD $6 &9 $4",
+            "LDPTR1 $4 0x14",
+            "LMAKE $4 $4",
+            "SETFLD $6 &a $4",
+            "PMAKE $4 &1",
+            "NOT $4 $4",
+            "SETFLD $6 &b $4",
             "COPY $5 $6",
-            "ORIGIN $0",
-            "ALOAD $2 $0 &1",
-            "OBTAIN $4 &0",
-            "GENKEY $6 $2 $4",
-            "GENKEY $6 $2 $4",
-            "DISPER $6 $5",
-            "SETKEY $2 $4 $6",
-            "STORE $2",
-            "ORIGIN $0",
-            "ALOAD $3 $0 &2",
-            "GATHER $2 $3",
-            "INCR $2",
-            "DISPER $3 $2",
+            "ORIGIN $4",
+            "ALOAD $6 $4 &1",
+            "OBTAIN $7 &0",
+            "GENKEY $8 $6 $7",
+            "GENKEY $8 $6 $7",
+            "DISPER $8 $5",
+            "SETKEY $6 $7 $8",
+            "STORE $6",
+            "ORIGIN $4",
+            "ALOAD $3 $4 &3",
+            "GATHER $5 $3",
+            "INCR $5",
+            "DISPER $3 $5",
             "STORE $3",
-            "ORIGIN $0",
-            "ALOAD $2 $0 &3",
-            "DISPER $2 $1",
-            "STORE $2"
+            "ORIGIN $3",
+            "ALOAD $4 $3 &4",
+            "DISPER $4 $1",
+            "STORE $4",
+            "CARGS $1",
+            "OBTAIN $3 &0",
+            "SETFLD $1 &0 $3",
+            "GETFLD $0 $0 &1",
+            "SETFLD $1 &1 $0",
+            "SETFLD $1 &2 $2",
+            "LDPTR1 $0 0x2c",
+            "EVMAKE $0 $0 $1",
+            "LOGIC $1",
+            "ID $1 $1",
+            "EMIT $1 $0"
           ]
         },
         "catches": []
       }
     },
     {
-      "ptr": 53,
+      "ptr": 63,
       "deps": [
         23,
         29,
-        35,
-        39
+        37,
+        45,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -1939,7 +2306,7 @@
         "returns": [],
         "executes": {
           "asm": [
-            "LDPTR1 $0 0x23",
+            "LDPTR1 $0 0x25",
             "MAKE $0 $0",
             "ORIGIN $1",
             "ALOAD $2 $1 &1",
@@ -1979,9 +2346,9 @@
             "LMAKE $1 $1",
             "THROW $1",
             "DEST",
-            "LDPTR1 $1 0x23",
+            "LDPTR1 $1 0x25",
             "MAKE $1 $1",
-            "LDPTR1 $2 0x23",
+            "LDPTR1 $2 0x25",
             "MAKE $2 $2",
             "GETFLD $3 $0 &0",
             "SETFLD $2 &0 $3",
@@ -2002,40 +2369,57 @@
             "SETFLD $2 &7 $3",
             "GETFLD $3 $0 &8",
             "SETFLD $2 &8 $3",
-            "GETFLD $0 $0 &9",
-            "SETFLD $2 &9 $0",
-            "OBTAIN $0 &1",
-            "SETFLD $2 &a $0",
-            "PMAKE $0 &1",
-            "NOT $0 $0",
-            "SETFLD $2 &b $0",
+            "GETFLD $3 $0 &9",
+            "SETFLD $2 &9 $3",
+            "OBTAIN $3 &1",
+            "SETFLD $2 &a $3",
+            "PMAKE $4 &1",
+            "NOT $4 $4",
+            "SETFLD $2 &b $4",
             "COPY $1 $2",
-            "ORIGIN $0",
-            "ALOAD $2 $0 &1",
-            "OBTAIN $3 &0",
-            "GENKEY $4 $2 $3",
-            "GENKEY $4 $2 $3",
-            "DISPER $4 $1",
-            "SETKEY $2 $3 $4",
+            "ORIGIN $2",
+            "ALOAD $4 $2 &1",
+            "OBTAIN $5 &0",
+            "GENKEY $6 $4 $5",
+            "GENKEY $6 $4 $5",
+            "DISPER $6 $1",
+            "SETKEY $4 $5 $6",
+            "STORE $4",
+            "ORIGIN $1",
+            "ALOAD $2 $1 &3",
+            "GATHER $4 $2",
+            "INCR $4",
+            "DISPER $2 $4",
             "STORE $2",
-            "ORIGIN $0",
-            "ALOAD $1 $0 &2",
-            "GATHER $2 $1",
-            "INCR $2",
-            "DISPER $1 $2",
-            "STORE $1"
+            "ORIGIN $1",
+            "ALOAD $2 $1 &4",
+            "GETFLD $4 $0 &6",
+            "DISPER $2 $4",
+            "STORE $2",
+            "CARGS $1",
+            "OBTAIN $2 &0",
+            "SETFLD $1 &0 $2",
+            "GETFLD $0 $0 &1",
+            "SETFLD $1 &1 $0",
+            "SETFLD $1 &2 $3",
+            "LDPTR1 $0 0x2d",
+            "EVMAKE $0 $0 $1",
+            "LOGIC $1",
+            "ID $1 $1",
+            "EMIT $1 $0"
           ]
         },
         "catches": []
       }
     },
     {
-      "ptr": 54,
+      "ptr": 64,
       "deps": [
         30,
-        33,
-        38,
-        39
+        35,
+        40,
+        39,
+        48
       ],
       "kind": "callable",
       "data": {
@@ -2058,21 +2442,21 @@
         ],
         "executes": {
           "asm": [
-            "LDPTR1 $0 0x26",
+            "LDPTR1 $0 0x28",
             "MAKE $0 $0",
             "PMAKE $1 &5",
             "OBTAIN $2 &0",
-            "ALOAD $3 $2 &2",
+            "ALOAD $3 $2 &3",
             "GATHER $1 $3",
             "DUMP $3",
             "PMAKE $3 &5",
-            "ALOAD $4 $2 &3",
+            "ALOAD $4 $2 &4",
             "GATHER $3 $4",
             "DUMP $4",
             "PMAKE $4 &5",
             "LDPTR1 $5 0x1e",
             "VMAKE $4 $5 $4",
-            "LDPTR1 $5 0x22",
+            "LDPTR1 $5 0x24",
             "MAKE $5 $5",
             "ALOAD $6 $2 &0",
             "LDPTR1 $7 0x0",
@@ -2080,65 +2464,124 @@
             "GETKEY $7 $6 $7",
             "GATHER $5 $7",
             "DUMP $6",
-            "GETFLD $6 $5 &4",
+            "GETFLD $6 $5 &5",
             "NOT $6 $6",
             "LDPTR1 $7 0x1b",
             "JUMPI $7 $6",
             "APPEND $4 $5",
             "DEST",
-            "LDPTR1 $5 0x22",
-            "MAKE $5 $5",
-            "ALOAD $6 $2 &0",
-            "LDPTR1 $7 0x1",
-            "LMAKE $7 $7",
-            "GETKEY $7 $6 $7",
-            "GATHER $5 $7",
-            "DUMP $6",
-            "GETFLD $6 $5 &4",
-            "NOT $6 $6",
-            "LDPTR1 $7 0x29",
-            "JUMPI $7 $6",
-            "APPEND $4 $5",
-            "DEST",
-            "LDPTR1 $5 0x22",
-            "MAKE $5 $5",
-            "ALOAD $6 $2 &0",
-            "LDPTR1 $7 0x2",
-            "LMAKE $7 $7",
-            "GETKEY $7 $6 $7",
-            "GATHER $5 $7",
-            "DUMP $6",
-            "GETFLD $6 $5 &4",
-            "NOT $6 $6",
-            "LDPTR1 $7 0x37",
-            "JUMPI $7 $6",
-            "APPEND $4 $5",
-            "DEST",
-            "LDPTR1 $5 0x22",
-            "MAKE $5 $5",
-            "ALOAD $6 $2 &0",
-            "LDPTR1 $7 0x3",
-            "LMAKE $7 $7",
-            "GETKEY $7 $6 $7",
-            "GATHER $5 $7",
-            "DUMP $6",
-            "GETFLD $6 $5 &4",
-            "NOT $6 $6",
-            "LDPTR1 $7 0x45",
-            "JUMPI $7 $6",
-            "APPEND $4 $5",
-            "DEST",
-            "PMAKE $5 &5",
-            "LDPTR1 $6 0x21",
-            "VMAKE $5 $6 $5",
-            "LDPTR1 $6 0x26",
+            "LDPTR1 $6 0x24",
             "MAKE $6 $6",
-            "SETFLD $6 &0 $2",
-            "SETFLD $6 &1 $1",
-            "SETFLD $6 &2 $4",
-            "SETFLD $6 &3 $5",
-            "SETFLD $6 &4 $3",
-            "COPY $0 $6",
+            "ALOAD $7 $2 &0",
+            "LDPTR1 $8 0x1",
+            "LMAKE $8 $8",
+            "GETKEY $8 $7 $8",
+            "GATHER $6 $8",
+            "DUMP $7",
+            "GETFLD $7 $6 &5",
+            "NOT $7 $7",
+            "LDPTR1 $8 0x29",
+            "JUMPI $8 $7",
+            "APPEND $4 $6",
+            "DEST",
+            "LDPTR1 $7 0x24",
+            "MAKE $7 $7",
+            "ALOAD $8 $2 &0",
+            "LDPTR1 $9 0x2",
+            "LMAKE $9 $9",
+            "GETKEY $9 $8 $9",
+            "GATHER $7 $9",
+            "DUMP $8",
+            "GETFLD $8 $7 &5",
+            "NOT $8 $8",
+            "LDPTR1 $9 0x37",
+            "JUMPI $9 $8",
+            "APPEND $4 $7",
+            "DEST",
+            "LDPTR1 $8 0x24",
+            "MAKE $8 $8",
+            "ALOAD $9 $2 &0",
+            "LDPTR1 $a 0x3",
+            "LMAKE $a $a",
+            "GETKEY $a $9 $a",
+            "GATHER $8 $a",
+            "DUMP $9",
+            "GETFLD $9 $8 &5",
+            "NOT $9 $9",
+            "LDPTR1 $a 0x45",
+            "JUMPI $a $9",
+            "APPEND $4 $8",
+            "DEST",
+            "PMAKE $9 &5",
+            "LDPTR1 $a 0x23",
+            "VMAKE $9 $a $9",
+            "ALOAD $a $2 &2",
+            "PMAKE $b &5",
+            "SIZE $c $a",
+            "DEST",
+            "LT $d $b $c",
+            "NOT $d $d",
+            "LDPTR1 $e 0x82",
+            "JUMPI $e $d",
+            "GETIDX $d $a $b",
+            "LDPTR1 $f 0x25",
+            "MAKE $f $f",
+            "ALOAD $10 $2 &1",
+            "HASKEY $11 $10 $d",
+            "NOT $11 $11",
+            "LDPTR1 $12 0x5b",
+            "JUMPI $12 $11",
+            "GETKEY $11 $10 $d",
+            "GATHER $f $11",
+            "DEST",
+            "DUMP $10",
+            "PMAKE $10 &1",
+            "NOT $10 $10",
+            "GETFLD $11 $f &b",
+            "AND $10 $10 $11",
+            "NOT $11 $10",
+            "LDPTR1 $12 0x69",
+            "JUMPI $12 $11",
+            "GETFLD $11 $f &2",
+            "LDPTR1 $12 0x5",
+            "LMAKE $12 $12",
+            "EQ $11 $11 $12",
+            "AND $10 $10 $11",
+            "DEST",
+            "NOT $10 $10",
+            "LDPTR1 $11 0x7d",
+            "JUMPI $11 $10",
+            "LDPTR1 $10 0x27",
+            "MAKE $10 $10",
+            "LDPTR1 $11 0x27",
+            "MAKE $11 $11",
+            "GETFLD $12 $f &0",
+            "SETFLD $11 &0 $12",
+            "GETFLD $12 $f &1",
+            "SETFLD $11 &1 $12",
+            "GETFLD $12 $f &2",
+            "SETFLD $11 &2 $12",
+            "GETFLD $12 $f &3",
+            "SETFLD $11 &3 $12",
+            "GETFLD $f $f &7",
+            "SETFLD $11 &4 $f",
+            "COPY $10 $11",
+            "APPEND $9 $10",
+            "DEST",
+            "DEST",
+            "INCR $b",
+            "LDPTR1 $e 0x4c",
+            "JUMP $e",
+            "DEST",
+            "DUMP $a",
+            "LDPTR1 $5 0x28",
+            "MAKE $5 $5",
+            "SETFLD $5 &0 $2",
+            "SETFLD $5 &1 $1",
+            "SETFLD $5 &2 $4",
+            "SETFLD $5 &3 $9",
+            "SETFLD $5 &4 $3",
+            "COPY $0 $5",
             "YIELD $0 &0"
           ]
         },
@@ -2146,9 +2589,9 @@
       }
     },
     {
-      "ptr": 55,
+      "ptr": 65,
       "deps": [
-        39
+        48
       ],
       "kind": "callable",
       "data": {
@@ -2172,7 +2615,7 @@
         "executes": {
           "asm": [
             "OBTAIN $0 &0",
-            "ALOAD $1 $0 &2",
+            "ALOAD $1 $0 &3",
             "YIELD $1 &0",
             "DUMP $1"
           ]
@@ -2181,9 +2624,9 @@
       }
     },
     {
-      "ptr": 56,
+      "ptr": 66,
       "deps": [
-        39
+        48
       ],
       "kind": "callable",
       "data": {
@@ -2207,7 +2650,7 @@
         "executes": {
           "asm": [
             "OBTAIN $0 &0",
-            "ALOAD $1 $0 &3",
+            "ALOAD $1 $0 &4",
             "YIELD $1 &0",
             "DUMP $1"
           ]

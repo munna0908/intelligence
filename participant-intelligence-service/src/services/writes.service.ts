@@ -137,9 +137,9 @@ export class WritesService implements IWritesService {
         : await moiInterface.submitSignedWrite(signedIx);
 
       if (!result.success) {
-        this.logger.warn(
-          { requestId, participantId, action, error: result.error },
-          'Write submission failed'
+        this.logger.error(
+          { requestId, participantId, action, error: result.error, txHash: result.txHash },
+          'Write submission failed — MOI network rejected the transaction'
         );
 
         return {
