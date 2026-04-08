@@ -10,7 +10,7 @@ import type {
   IntelligenceObjectSummary,
   CategoryRef,
 } from '../../domain/models.js';
-import type { Category, CATEGORIES } from '../../domain/types.js';
+import type { Category } from '../../domain/types.js';
 import { getLogger } from '../../logging/index.js';
 
 interface ContractCategoryRef {
@@ -37,6 +37,8 @@ export async function getIntelligenceObject(
   logger.debug({ participantId }, 'getIntelligenceObject');
 
   try {
+    // Fetch all known categories via individual GetCategoryRef calls
+    const { CATEGORIES } = await import('../../domain/types.js');
     const categoryRefs = await getCategoryRefs(participantId, [...CATEGORIES]);
 
     // If no category refs exist the participant has no on-chain data
