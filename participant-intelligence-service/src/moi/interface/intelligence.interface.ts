@@ -9,14 +9,10 @@ import { getLogicDriver } from '../config/provider.config.js';
 import type {
   IntelligenceObjectSummary,
   CategoryRef,
-  Session,
 } from '../../domain/models.js';
-import type { Category, SessionStatus } from '../../domain/types.js';
+import type { Category, CATEGORIES } from '../../domain/types.js';
 import { getLogger } from '../../logging/index.js';
 
-/**
- * Contract response types matching the Coco contract structures
- */
 interface ContractCategoryRef {
   Category: string;
   Ref: string;
@@ -26,76 +22,13 @@ interface ContractCategoryRef {
   Exists: boolean;
 }
 
-interface ContractSessionRecord {
-  SessionId: string;
-  AgentId: string;
-  Status: string;
-  Purpose: string;
-  ApprovedCategories: string[];
-  ApprovedScopes: string[];
-  IssuedAt: bigint | number;
-  ExpiresAt: bigint | number;
-  RemainingUses: bigint | number;
-  ApprovalRef: string;
-  RevocationReason: string;
-  Exists: boolean;
-}
-
-interface ContractIntelligenceObject {
-  ActorId: string;
-  Version: bigint | number;
-  CategoryRefs: ContractCategoryRef[];
-  ActiveSessions: Array<{
-    SessionId: string;
-    AgentId: string;
-    Status: string;
-    Purpose: string;
-    ExpiresAt: bigint | number;
-  }>;
-  LastUpdatedAt: bigint | number;
-}
-
 /**
- * Convert bigint to number safely
- */
-function toNumber(value: bigint | number): number {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
-  return value;
-}
-
-/**
- * Map contract CategoryRef to domain model
- */
-function mapCategoryRef(ref: ContractCategoryRef): CategoryRef {
-  return {
-    ref: ref.Ref,
-    schemaVersion: ref.SchemaVersion,
-    updatedAt: toNumber(ref.LastUpdated),
-    updatedBy: ref.UpdatedBy,
-  };
-}
-
-/**
- * Map contract SessionRecord to domain model
- */
-function mapSession(record: ContractSessionRecord): Session {
-  return {
-    sessionId: record.SessionId,
-    agentId: record.AgentId,
-    status: record.Status as SessionStatus,
-    purpose: record.Purpose,
-    approvedCategories: record.ApprovedCategories as Category[],
-    approvedScopes: record.ApprovedScopes,
-    expiresAt: toNumber(record.ExpiresAt),
-    remainingUses: toNumber(record.RemainingUses),
-    createdAt: toNumber(record.IssuedAt),
-  };
-}
-
-/**
- * Get the full intelligence object for a participant
+ * Get the full intelligence object for a participant.
+ *
+ * NOTE: GetIntelligenceObject contract routine exhausts the devnet fuel meter
+ * for participants with data (builtin.MeterExhausted). We build the summary
+ * from individual GetCategoryRef calls instead — those are lightweight and
+ * already proven to work (see get-category-refs.js test script).
  */
 export async function getIntelligenceObject(
   participantId: string
@@ -104,71 +37,23 @@ export async function getIntelligenceObject(
   logger.debug({ participantId }, 'getIntelligenceObject');
 
   try {
-    const driver = await getLogicDriver();
+    const categoryRefs = await getCategoryRefs(participantId, [...CATEGORIES]);
 
-    const routineFn = driver.routines['GetIntelligenceObject'];
-    if (!routineFn) {
-      throw new Error('GetIntelligenceObject routine not found');
-    }
-
-    // New SDK API: routines return a context, call .call() for reads
-    const ctx = routineFn(participantId);
-    const callResponse = await ctx.call({
-      participants: [{ id: participantId as Hex, lock_type: LockType.MUTATE_LOCK }],
-    });
-    const rawResult = await callResponse.result();
-
-    logger.debug({ participantId, rawResult: JSON.stringify(rawResult) }, 'GetIntelligenceObject raw result');
-
-    const response = rawResult as { output: { intel_obj: ContractIntelligenceObject } | null; error: unknown };
-    const result = response.output?.intel_obj ?? null;
-    const error = response.error ?? null;
-
-    // Handle contract errors (e.g., participant doesn't exist)
-    if (error || !result) {
-      logger.debug({ participantId, error }, 'Participant not found or contract error');
+    // If no category refs exist the participant has no on-chain data
+    if (Object.keys(categoryRefs).length === 0) {
+      logger.info({ participantId }, 'No category refs found — participant not found');
       return null;
     }
 
-    if (toNumber(result.Version) === 0) {
-      logger.debug({ participantId }, 'Intelligence object has version 0');
-      return null;
-    }
-
-    // Map category refs
-    const categoryRefs: Partial<Record<Category, CategoryRef>> = {};
-    const refs = result.CategoryRefs ?? [];
-    for (const ref of refs) {
-      if (ref.Exists) {
-        categoryRefs[ref.Category as Category] = mapCategoryRef(ref);
-      }
-    }
-
-    // Get active sessions
-    const sessions: Session[] = [];
-    const getSessionFn = driver.routines['GetSession'];
-    const activeSessions = result.ActiveSessions ?? [];
-
-    if (getSessionFn && activeSessions.length > 0) {
-      for (const summary of activeSessions) {
-        const sessionCtx = getSessionFn(participantId, summary.SessionId);
-        const sessionCallResponse = await sessionCtx.call({
-          participants: [{ id: participantId as Hex, lock_type: LockType.MUTATE_LOCK }],
-        });
-        const sessionResponse = await sessionCallResponse.result() as { output: { session: ContractSessionRecord } | null; error: unknown };
-        if (sessionResponse.output?.session?.Exists) {
-          sessions.push(mapSession(sessionResponse.output.session));
-        }
-      }
-    }
+    logger.info({ participantId, categories: Object.keys(categoryRefs) }, 'Intelligence object built from category refs');
 
     return {
       participantId,
-      version: toNumber(result.Version).toString(),
+      version: '1',
       categoryRefs,
-      sessions,
+      sessions: [], // sessions are validated separately via ephemeralState (validateSession)
       metadata: {
-        updatedAt: toNumber(result.LastUpdatedAt),
+        updatedAt: Math.floor(Date.now() / 1000),
       },
     };
   } catch (error) {
@@ -178,7 +63,10 @@ export async function getIntelligenceObject(
 }
 
 /**
- * Get specific category references for a participant
+ * Get specific category references for a participant.
+ *
+ * Calls GetCategoryRef in parallel — one lightweight routine call per category.
+ * (GetIntelligenceObject exhausts the devnet fuel meter; GetCategoryRef does not.)
  */
 export async function getCategoryRefs(
   participantId: string,
@@ -189,24 +77,42 @@ export async function getCategoryRefs(
 
   try {
     const driver = await getLogicDriver();
-    const result: Partial<Record<Category, CategoryRef>> = {};
 
     const getCategoryRefFn = driver.routines['GetCategoryRef'];
     if (!getCategoryRefFn) {
       throw new Error('GetCategoryRef routine not found');
     }
 
-    for (const category of categories) {
-      const ctx = getCategoryRefFn(participantId, category);
-      const callResponse = await ctx.call({
-        participants: [{ id: participantId as Hex, lock_type: LockType.MUTATE_LOCK }],
-      });
-      const response = await callResponse.result() as { output: { cat_ref: ContractCategoryRef } | null; error: unknown };
-      if (response.output?.cat_ref?.Exists) {
-        result[category] = mapCategoryRef(response.output.cat_ref);
-      }
-    }
+    const entries = await Promise.all(
+      categories.map(async (category) => {
+        try {
+          const ctx = getCategoryRefFn(participantId, category);
+          const callResponse = await ctx.call({
+            participants: [{ id: participantId as Hex, lock_type: LockType.MUTATE_LOCK }],
+          });
+          const raw = await callResponse.result() as any;
+          const ref: ContractCategoryRef | null =
+            raw?.output?.cat_ref ?? raw?.cat_ref ?? null;
+          if (ref?.Exists && ref.Ref) {
+            return [category, {
+              ref: ref.Ref,
+              schemaVersion: ref.SchemaVersion ?? '1.0',
+              updatedAt: typeof ref.LastUpdated === 'bigint' ? Number(ref.LastUpdated) : (ref.LastUpdated ?? 0),
+              updatedBy: ref.UpdatedBy ?? '',
+            }] as [Category, CategoryRef];
+          }
+          return null;
+        } catch (err) {
+          logger.debug({ participantId, category, error: err }, 'GetCategoryRef failed, skipping');
+          return null;
+        }
+      })
+    );
 
+    const result: Partial<Record<Category, CategoryRef>> = {};
+    for (const entry of entries) {
+      if (entry) result[entry[0]] = entry[1];
+    }
     return result;
   } catch (error) {
     logger.error({ participantId, categories, error }, 'Failed to get category refs');
