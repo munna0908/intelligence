@@ -63,7 +63,7 @@ event CategoryRemoved:
 const CATEGORY_FOOD     String = "FOOD"
 const CATEGORY_HEALTH   String = "HEALTH"
 const CATEGORY_ADDRESS  String = "ADDRESS"
-const CATEGORY_PAYMENT  String = "PAYMENT"
+const CATEGORY_SCHEDULE String = "SCHEDULE"
 
 const STATUS_REQUESTED  String = "REQUESTED"
 const STATUS_ACTIVE     String = "ACTIVE"
@@ -150,7 +150,7 @@ function IsValidCategory(category String) -> (valid Bool):
     if category == CATEGORY_ADDRESS:
         valid = true
         return
-    if category == CATEGORY_PAYMENT:
+    if category == CATEGORY_SCHEDULE:
         valid = true
         return
     valid = false
@@ -179,7 +179,7 @@ endpoint dynamic SetCategoryRef(category String, ref String, schema_version Stri
     memory check_valid Bool
     check_valid = (valid) <- IsValidCategory(category)
     if !check_valid:
-        throw "Invalid category: must be FOOD, HEALTH, ADDRESS, or PAYMENT"
+        throw "Invalid category: must be FOOD, HEALTH, ADDRESS, or SCHEDULE"
 
     memory cat_ref CategoryRef
     cat_ref = CategoryRef{
@@ -266,11 +266,11 @@ endpoint static ListCategoryRefs(actor_id Identifier) -> (result []CategoryRef):
     if address_ref.Exists:
         append(refs_list, address_ref)
 
-    memory payment_ref CategoryRef
+    memory schedule_ref CategoryRef
     observe refs <- Intelligence.Actor(actor_id).category_refs:
-        gather payment_ref <- refs[CATEGORY_PAYMENT]
-    if payment_ref.Exists:
-        append(refs_list, payment_ref)
+        gather schedule_ref <- refs[CATEGORY_SCHEDULE]
+    if schedule_ref.Exists:
+        append(refs_list, schedule_ref)
 
     result = refs_list
 
@@ -661,11 +661,11 @@ endpoint static GetIntelligenceObject(actor_id Identifier) -> (intel_obj Intelli
     if address_ref.Exists:
         append(cat_refs, address_ref)
 
-    memory payment_ref CategoryRef
+    memory schedule_ref CategoryRef
     observe refs <- Intelligence.Actor(actor_id).category_refs:
-        gather payment_ref <- refs[CATEGORY_PAYMENT]
-    if payment_ref.Exists:
-        append(cat_refs, payment_ref)
+        gather schedule_ref <- refs[CATEGORY_SCHEDULE]
+    if schedule_ref.Exists:
+        append(cat_refs, schedule_ref)
 
     memory active_sessions []SessionSummary
 

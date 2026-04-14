@@ -72,7 +72,7 @@ The service uses the [MOI JS SDK](https://js-moi-sdk.docs.moi.technology/) as th
 | FOOD | `preferences.food.read` |
 | HEALTH | `health.read` |
 | ADDRESS | `profile.address.read` |
-| PAYMENT | `finance.payment.read` |
+| SCHEDULE | `schedule.read` |
 
 ## API Reference
 
@@ -421,7 +421,7 @@ The mock interface seeds two participants:
 | Participant ID | Categories | Sessions |
 |----------------|------------|----------|
 | `participant_001` | FOOD, HEALTH | 1 active session |
-| `participant_002` | ADDRESS, PAYMENT | No sessions |
+| `participant_002` | ADDRESS, SCHEDULE | No sessions |
 
 ### Resetting Mock State
 

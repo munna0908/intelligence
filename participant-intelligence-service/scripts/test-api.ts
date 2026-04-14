@@ -220,12 +220,12 @@ async function testIntelligence() {
   {
     const { status, body } = await post('/v1/categories/get', {
       participantId: 'participant_002',
-      categories: ['ADDRESS', 'PAYMENT'],
+      categories: ['ADDRESS', 'SCHEDULE'],
     });
     const b = body as any;
 
     if (status === 200 && b?.categoryRefs?.ADDRESS) {
-      ok(`POST /v1/categories/get [ADDRESS, PAYMENT] (participant_002) ${arrow} 200`, preview(b.categoryRefs));
+      ok(`POST /v1/categories/get [ADDRESS, SCHEDULE] (participant_002) ${arrow} 200`, preview(b.categoryRefs));
     } else {
       ko(`POST /v1/categories/get participant_002 ${arrow} expected 200 with ADDRESS`, `got ${status}: ${preview(body)}`);
     }
@@ -367,7 +367,7 @@ async function testSessions() {
       participantId: 'participant_001',
       agentId: 'openclaw_whatsapp_bot',
       sessionId: 'sess_existing_001',
-      requiredCategories: ['FOOD', 'PAYMENT'],  // PAYMENT not in session
+      requiredCategories: ['FOOD', 'SCHEDULE'],  // SCHEDULE not in session
       requiredScopes: ['preferences.food.read'],
       currentTime,
     });

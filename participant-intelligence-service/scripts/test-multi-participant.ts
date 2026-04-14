@@ -248,7 +248,7 @@ async function runAlice(wallet: Wallet, driver: LogicDriver, participantId: stri
 async function runBob(wallet: Wallet, driver: LogicDriver, participantId: string) {
   console.log('\n┌─────────────────────────────────────────────────────────');
   console.log('│  Participant: Bob');
-  console.log('│  Writes: SetCategoryRef(ADDRESS), SetCategoryRef(PAYMENT),');
+  console.log('│  Writes: SetCategoryRef(ADDRESS), SetCategoryRef(SCHEDULE),');
   console.log('│          CreateSessionRequest, DenySession');
   console.log('│  Reads:  POST categories/get, GET sessions,');
   console.log('│          POST sessions/validate → wrong_status');
@@ -263,28 +263,28 @@ async function runBob(wallet: Wallet, driver: LogicDriver, participantId: string
   ]);
   if (!addrTx) return;
 
-  // ── Write: SetCategoryRef PAYMENT ────────────────────────────────────────────
-  console.log('\n  [Write] SetCategoryRef → PAYMENT');
-  const payTx = await directWrite(wallet, driver, 'SetCategoryRef', [
-    'PAYMENT', `ipfs://bob-payment-v${now}`, '1.0', BigInt(now),
+  // ── Write: SetCategoryRef SCHEDULE ───────────────────────────────────────────
+  console.log('\n  [Write] SetCategoryRef → SCHEDULE');
+  const schedTx = await directWrite(wallet, driver, 'SetCategoryRef', [
+    'SCHEDULE', `ipfs://bob-schedule-v${now}`, '1.0', BigInt(now),
   ]);
-  if (!payTx) return;
+  if (!schedTx) return;
 
   // ── Read: POST /v1/categories/get ────────────────────────────────────────────
-  console.log('\n  [Read] POST /v1/categories/get [ADDRESS, PAYMENT]');
+  console.log('\n  [Read] POST /v1/categories/get [ADDRESS, SCHEDULE]');
   const { status: cs, body: cats } = await post('/v1/categories/get', {
-    participantId, categories: ['ADDRESS', 'PAYMENT'],
+    participantId, categories: ['ADDRESS', 'SCHEDULE'],
   });
-  check('status 200',             cs === 200);
-  check('ADDRESS ref matches', (cats as any)?.categoryRefs?.ADDRESS?.ref === `ipfs://bob-address-v${now}`);
-  check('PAYMENT ref matches', (cats as any)?.categoryRefs?.PAYMENT?.ref === `ipfs://bob-payment-v${now}`);
+  check('status 200',              cs === 200);
+  check('ADDRESS ref matches',  (cats as any)?.categoryRefs?.ADDRESS?.ref === `ipfs://bob-address-v${now}`);
+  check('SCHEDULE ref matches', (cats as any)?.categoryRefs?.SCHEDULE?.ref === `ipfs://bob-schedule-v${now}`);
 
   // ── Session: POST /v1/sessions/ensure ────────────────────────────────────────
   console.log('\n  [Read] POST /v1/sessions/ensure');
   const { status: es, body: ensured } = await post('/v1/sessions/ensure', {
     participantId,
     agentId:            'bob_agent_bot',
-    purpose:            'delivery_payment',
+    purpose:            'delivery_schedule',
     requiredCategories: ['ADDRESS'],
     requiredScopes:     ['profile.address.read'],
     requestedUses:      5,
@@ -296,7 +296,7 @@ async function runBob(wallet: Wallet, driver: LogicDriver, participantId: string
   // ── Write: CreateSessionRequest ──────────────────────────────────────────────
   console.log('\n  [Write] CreateSessionRequest');
   const createTx = await directWrite(wallet, driver, 'CreateSessionRequest', [
-    sessionId, 'bob_agent_bot', 'delivery_payment',
+    sessionId, 'bob_agent_bot', 'delivery_schedule',
     ['ADDRESS'], ['profile.address.read'],
     BigInt(5), BigInt(1800), '',
   ]);
@@ -428,9 +428,9 @@ async function crossParticipantCheck(alice: string, bob: string, carol: string) 
   console.log('├─────────────────────────────────────────────────────────');
 
   const checks: Array<[string, string, string[], string[]]> = [
-    ['Alice', alice, ['FOOD', 'HEALTH'],    ['ADDRESS', 'PAYMENT']],
-    ['Bob',   bob,   ['ADDRESS', 'PAYMENT'], ['FOOD',    'HEALTH'] ],
-    ['Carol', carol, ['FOOD'],              ['HEALTH',  'ADDRESS', 'PAYMENT']],
+    ['Alice', alice, ['FOOD', 'HEALTH'],     ['ADDRESS', 'SCHEDULE']],
+    ['Bob',   bob,   ['ADDRESS', 'SCHEDULE'], ['FOOD',    'HEALTH'] ],
+    ['Carol', carol, ['FOOD'],               ['HEALTH',  'ADDRESS', 'SCHEDULE']],
   ];
 
   for (const [label, participantId, expected, notExpected] of checks) {

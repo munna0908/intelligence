@@ -140,6 +140,7 @@ describe('API Routes', () => {
             ref: 'bafy_new_cid',
             schemaVersion: '1.0',
             updatedAt: getCurrentTimestamp(),
+            updatedBy: 'mealmind',
           },
         });
 
@@ -167,6 +168,7 @@ describe('API Routes', () => {
             ref: 'bafy_new_cid',
             schemaVersion: '1.0',
             updatedAt: getCurrentTimestamp(),
+            updatedBy: 'mealmind',
           },
         });
 

@@ -39,13 +39,13 @@ test-intelligence = [
     "invoke Intelligence.SetCategoryRef(category: \"FOOD\", ref: \"fish\", schema_version: \"1.1\", updated_at: 1773412350, updated_by: \"swiggy\") as rahul",
     "invoke Intelligence.SetCategoryRef(category: \"HEALTH\", ref: \"vitals\", schema_version: \"1.0\", updated_at: 1773412350, updated_by: \"my diet app\") as rahul",
     "invoke Intelligence.SetCategoryRef(category: \"ADDRESS\", ref: \"home\", schema_version: \"1.1\", updated_at: 1773412351, updated_by: \"addressbook\") as rahul",
-    "invoke Intelligence.SetCategoryRef(category: \"PAYMENT\", ref: \"card\", schema_version: \"1.0\", updated_at: 1773412351, updated_by: \"phonepe\") as rahul",
+    "invoke Intelligence.SetCategoryRef(category: \"SCHEDULE\", ref: \"card\", schema_version: \"1.0\", updated_at: 1773412351, updated_by: \"phonepe\") as rahul",
 
     # --- SetCategoryRef: set all 4 categories for robert ---
     "invoke Intelligence.SetCategoryRef(category: \"FOOD\", ref: \"milk\", schema_version: \"1.2\", updated_at: 1773412351, updated_by: \"swiggy\") as robert",
     "invoke Intelligence.SetCategoryRef(category: \"HEALTH\", ref: \"records\", schema_version: \"1.0\", updated_at: 1773412351, updated_by: \"my diet app\") as robert",
     "invoke Intelligence.SetCategoryRef(category: \"ADDRESS\", ref: \"office\", schema_version: \"1.0\", updated_at: 1773412351, updated_by: \"addressbook\") as robert",
-    "invoke Intelligence.SetCategoryRef(category: \"PAYMENT\", ref: \"bank\", schema_version: \"1.0\", updated_at: 1773412351, updated_by: \"phonepe\") as robert",
+    "invoke Intelligence.SetCategoryRef(category: \"SCHEDULE\", ref: \"bank\", schema_version: \"1.0\", updated_at: 1773412351, updated_by: \"phonepe\") as robert",
 
     # --- GetCategoryRef ---
     "invoke Intelligence.GetCategoryRef(actor_id: rahul, category: \"FOOD\") as X",

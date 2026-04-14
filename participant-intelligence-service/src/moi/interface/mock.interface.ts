@@ -109,11 +109,11 @@ class MockStore {
           updatedAt: now - 1800,
           updatedBy: 'addressbook',
         },
-        PAYMENT: {
-          ref: 'bafy_payment_cid_002',
+        SCHEDULE: {
+          ref: 'bafy_schedule_cid_002',
           schemaVersion: '1.0',
           updatedAt: now - 1800,
-          updatedBy: 'phonepe',
+          updatedBy: 'daybook',
         },
       },
       sessions: [],

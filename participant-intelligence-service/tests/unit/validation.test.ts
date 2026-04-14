@@ -114,6 +114,7 @@ describe('Validation Schemas', () => {
         ref: 'bafy_new_cid',
         schemaVersion: '1.0',
         updatedAt: 1773162200,
+        updatedBy: 'mealmind',
       });
       expect(result.success).toBe(true);
     });

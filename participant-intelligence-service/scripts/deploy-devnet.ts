@@ -50,7 +50,7 @@ async function loadManifest(): Promise<object> {
 }
 
 async function getWallet(): Promise<Wallet> {
-  const mnemonic = process.env.MOI_MNEMONIC;
+  const mnemonic = "diary spirit praise tail vehicle dune letter day elephant check paddle fat";
 
   if (!mnemonic) {
     throw new Error(

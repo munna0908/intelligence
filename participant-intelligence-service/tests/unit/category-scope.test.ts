@@ -10,7 +10,7 @@ describe('Category/Scope Mapping', () => {
     expect(CATEGORIES).toContain('FOOD');
     expect(CATEGORIES).toContain('HEALTH');
     expect(CATEGORIES).toContain('ADDRESS');
-    expect(CATEGORIES).toContain('PAYMENT');
+    expect(CATEGORIES).toContain('SCHEDULE');
     expect(CATEGORIES.length).toBe(4);
   });
 
@@ -26,8 +26,8 @@ describe('Category/Scope Mapping', () => {
     expect(CATEGORY_SCOPE_MAP.ADDRESS).toBe('profile.address.read');
   });
 
-  it('should map PAYMENT to finance.payment.read', () => {
-    expect(CATEGORY_SCOPE_MAP.PAYMENT).toBe('finance.payment.read');
+  it('should map SCHEDULE to schedule.read', () => {
+    expect(CATEGORY_SCOPE_MAP.SCHEDULE).toBe('schedule.read');
   });
 
   it('should have mapping for all categories', () => {

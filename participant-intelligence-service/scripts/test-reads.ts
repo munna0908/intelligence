@@ -60,7 +60,7 @@ async function main() {
   console.log('\n── POST /v1/categories/get ──────────────────────────────────────');
   const { status: s2, body: b2 } = await post('/v1/categories/get', {
     participantId,
-    categories: ['FOOD', 'HEALTH', 'ADDRESS', 'PAYMENT'],
+    categories: ['FOOD', 'HEALTH', 'ADDRESS', 'SCHEDULE'],
   });
   console.log(`Status:   ${s2}`);
   console.log(`Response: ${JSON.stringify(b2, null, 2)}`);

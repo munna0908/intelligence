@@ -3,7 +3,7 @@
  */
 
 // Supported categories for v1
-export const CATEGORIES = ['FOOD', 'HEALTH', 'ADDRESS', 'PAYMENT'] as const;
+export const CATEGORIES = ['FOOD', 'HEALTH', 'ADDRESS', 'SCHEDULE'] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 // Category to scope mapping
@@ -11,7 +11,7 @@ export const CATEGORY_SCOPE_MAP: Record<Category, string> = {
   FOOD: 'preferences.food.read',
   HEALTH: 'health.read',
   ADDRESS: 'profile.address.read',
-  PAYMENT: 'finance.payment.read',
+  SCHEDULE: 'schedule.read',
 } as const;
 
 export type Scope = (typeof CATEGORY_SCOPE_MAP)[Category];

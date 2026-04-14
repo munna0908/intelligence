@@ -11,7 +11,7 @@ import 'dotenv-flow/config';
  *
  * Commands:
  *   set-category <category> <ref> <schema_version>
- *       Set a category reference (FOOD, HEALTH, ADDRESS, PAYMENT)
+ *       Set a category reference (FOOD, HEALTH, ADDRESS, SCHEDULE)
  *
  *   get-category <actor_id> <category>
  *       Get a category reference
@@ -201,7 +201,7 @@ Usage: npx tsx scripts/interact-devnet.ts <command> [args...]
 
 Commands:
   set-category <category> <ref> <schema_version>
-      Set a category reference (FOOD, HEALTH, ADDRESS, PAYMENT)
+      Set a category reference (FOOD, HEALTH, ADDRESS, SCHEDULE)
       Example: npx tsx scripts/interact-devnet.ts set-category FOOD ipfs://... v1.0
 
   get-category <actor_id> <category>
@@ -219,7 +219,7 @@ Commands:
 
   create-session <session_id> <agent_id> <purpose> <categories> <scopes> <uses> <ttl>
       Create a session request
-      Example: npx tsx scripts/interact-devnet.ts create-session sess-1 agent-1 "Food ordering" FOOD,PAYMENT read,write 100 3600
+      Example: npx tsx scripts/interact-devnet.ts create-session sess-1 agent-1 "Food ordering" FOOD,SCHEDULE read,write 100 3600
 
   approve-session <session_id> <expires_at> <remaining_uses>
       Approve a session

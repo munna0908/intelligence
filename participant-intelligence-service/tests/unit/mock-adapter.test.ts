@@ -48,9 +48,9 @@ describe('Mock MOI Interface', () => {
     });
 
     it('should return empty for non-existent categories', async () => {
-      const result = await mockGetCategoryRefs('participant_001', ['ADDRESS', 'PAYMENT']);
+      const result = await mockGetCategoryRefs('participant_001', ['ADDRESS', 'SCHEDULE']);
       expect(result.ADDRESS).toBeUndefined();
-      expect(result.PAYMENT).toBeUndefined();
+      expect(result.SCHEDULE).toBeUndefined();
     });
 
     it('should return empty for non-existent participant', async () => {
@@ -108,7 +108,7 @@ describe('Mock MOI Interface', () => {
       const result = await mockFindValidSession(
         'participant_001',
         'openclaw_whatsapp_bot',
-        ['FOOD', 'PAYMENT'], // PAYMENT not in existing session
+        ['FOOD', 'SCHEDULE'], // SCHEDULE not in existing session
         ['preferences.food.read'],
         currentTime
       );
@@ -166,7 +166,7 @@ describe('Mock MOI Interface', () => {
         'participant_001',
         'sess_existing_001',
         'openclaw_whatsapp_bot',
-        ['FOOD', 'PAYMENT'],
+        ['FOOD', 'SCHEDULE'],
         ['preferences.food.read'],
         getCurrentTimestamp()
       );
@@ -181,7 +181,7 @@ describe('Mock MOI Interface', () => {
         'sess_existing_001',
         'openclaw_whatsapp_bot',
         ['FOOD'],
-        ['preferences.food.read', 'finance.payment.read'],
+        ['preferences.food.read', 'schedule.read'],
         getCurrentTimestamp()
       );
 

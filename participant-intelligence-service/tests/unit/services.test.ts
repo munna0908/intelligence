@@ -114,6 +114,7 @@ describe('WritesService', () => {
           ref: 'bafy_new_cid',
           schemaVersion: '1.0',
           updatedAt: getCurrentTimestamp(),
+          updatedBy: 'mealmind',
         },
       });
 
@@ -155,6 +156,7 @@ describe('WritesService', () => {
           ref: 'bafy_new_cid',
           schemaVersion: '1.0',
           updatedAt: getCurrentTimestamp(),
+          updatedBy: 'mealmind',
         },
       });
 
