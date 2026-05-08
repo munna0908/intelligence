@@ -3,7 +3,7 @@
  */
 
 import { Router } from 'express';
-import { prepareWrite, submitWrite, getWriteStatus } from '../controller/writes.controller.js';
+import { preparePayment, submitPayment, prepareWrite, submitWrite, getWriteStatus } from '../controller/writes.controller.js';
 import { validateBody, validateParams } from '../../../middlewares/validation.middleware.js';
 import {
   prepareWriteBodyBaseSchema,
@@ -12,6 +12,12 @@ import {
 } from '../../../validation/schemas.js';
 
 const router = Router();
+
+// POST /v1/payment/prepare — prepare ixObject for a USD asset transfer
+router.post('/payment/prepare', preparePayment);
+
+// POST /v1/payment/submit — submit a signed asset transfer
+router.post('/payment/submit', submitPayment);
 
 // POST /v1/writes/prepare
 router.post(

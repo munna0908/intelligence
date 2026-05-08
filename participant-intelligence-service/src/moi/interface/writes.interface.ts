@@ -9,9 +9,19 @@ import type { TransactionStatus } from '../../domain/models.js';
 import { ACTION_METHOD_MAP } from '../../domain/models.js';
 import type { WriteAction } from '../../domain/types.js';
 import type { InteractionObject, InteractionRequest } from 'js-moi-sdk';
+import { OpType, hexToBytes, bytesToHex } from 'js-moi-sdk';
+import { documentEncode } from 'js-polo';
 import { getCurrentTimestamp } from '../../utils/crypto.utils.js';
 import { getConfig } from '../../config/index.js';
 import { getLogger } from '../../logging/index.js';
+
+const TRANSFER_SCHEMA = {
+  kind: 'struct',
+  fields: {
+    beneficiary: { kind: 'bytes' },
+    amount: { kind: 'integer' },
+  },
+} as const;
 
 /**
  * Result of preparing a contract write — contains the ixObject for client signing
@@ -121,6 +131,80 @@ async function prepareCreateAndApproveSession(
     ixObject: mergedIxObject,
     expiresAt: getCurrentTimestamp() + config.writeRequest.ttlSeconds,
   };
+}
+
+/**
+ * Prepare an InteractionObject for an asset transfer.
+ * Uses OpType.ASSET_INVOKE with POLO-encoded calldata (same pattern as SDK's AccountInherit/ParticipantCreate).
+ * Also validates the sender has sufficient balance before returning.
+ * Throws an error with message 'insufficient_balance' (and .balance / .required) if low.
+ * Throws an error with message 'asset_not_found' (and .assetId) if the asset doesn't exist in account.
+ */
+export async function prepareAssetTransfer(
+  assetId: string,
+  beneficiary: string,
+  amount: number,
+  sender?: string,
+): Promise<InteractionObject> {
+  const logger = getLogger().child({ interface: 'writes' });
+  const config = getConfig();
+  logger.debug({ assetId, beneficiary, amount, sender }, 'prepareAssetTransfer');
+
+  // Balance check — skip in mock mode (no real chain to query)
+  if (!config.moi.useMockAdapter && sender) {
+    try {
+      const provider = await getProvider();
+      const balance = await provider.getBalance(sender, assetId);
+      const balanceNum = Number(balance);
+      logger.debug({ sender, assetId, balance: balanceNum, required: amount }, 'USD balance check');
+      if (balanceNum < amount) {
+        const err: any = new Error('insufficient_balance');
+        err.balance = balanceNum;
+        err.required = amount;
+        throw err;
+      }
+    } catch (balanceErr: any) {
+      if (balanceErr.message === 'insufficient_balance') throw balanceErr;
+      // "asset not found" or similar — asset doesn't exist in this account
+      const errMsg: string = (balanceErr.message ?? '').toLowerCase();
+      if (errMsg.includes('not found') || errMsg.includes('asset')) {
+        const err: any = new Error('asset_not_found');
+        err.assetId = assetId;
+        err.required = amount;
+        throw err;
+      }
+      logger.warn({ error: balanceErr.message }, 'Balance check failed — proceeding anyway');
+    }
+  }
+
+  // POLO-encode { beneficiary, amount } as calldata — same pattern as MAS0AssetLogic.transfer()
+  const rawPayload = documentEncode(
+    { beneficiary: hexToBytes(beneficiary as `0x${string}`), amount: BigInt(amount) },
+    TRANSFER_SCHEMA,
+  );
+
+  // Mirror the exact structure MAS0AssetLogic.transfer() builds:
+  // - asset_id and calldata have NO 0x prefix (raw hex)
+  // - participants use 0x-prefixed addresses
+  // - no sender field — wallet injects sender from the WalletConnect "from" param
+  return {
+    fuel_price: 1,
+    fuel_limit: 1000,
+    ix_operations: [
+      {
+        type: OpType.ASSET_INVOKE,
+        payload: {
+          asset_id: assetId.replace(/^0x/i, ''),
+          callsite: 'Transfer',
+          calldata: bytesToHex(rawPayload.bytes()),
+        } as any,
+      },
+    ],
+    participants: [
+      { id: beneficiary, lock_type: 0 },   // MUTATE_LOCK — beneficiary account is credited
+      { id: assetId, lock_type: 2 },        // NO_LOCK — asset state is read
+    ],
+  } as any;
 }
 
 /**
